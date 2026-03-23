@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reno Heller</title>
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --card: #ffffff;
+    --border: #e8e6e0;
+    --text: #1a1a18;
+    --muted: #888;
+    --accent: #2d6a4f;
+    --danger: #c0392b;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  header { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 20px; position: sticky; top: 0; z-index: 10; }
+  .header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .logo { width: 34px; height: 34px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .logo svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+  header h1 { font-size: 17px; font-weight: 600; }
+  header p { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .overall-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .overall-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .5s; }
+
+  .day-tabs { display: flex; gap: 4px; overflow-x: auto; padding: 10px 16px 0; background: var(--card); border-bottom: 1px solid var(--border); scrollbar-width: none; }
+  .day-tabs::-webkit-scrollbar { display: none; }
+  .day-tab { padding: 6px 12px; border-radius: 8px 8px 0 0; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid transparent; border-bottom: none; white-space: nowrap; color: var(--muted); background: none; transition: all .15s; flex-shrink: 0; }
+  .day-tab:hover { color: var(--text); }
+  .day-tab.active { color: var(--accent); background: var(--bg); border-color: var(--border); }
+  .tab-count { font-size: 10px; margin-left: 4px; opacity: .7; }
+
+  .container { max-width: 680px; margin: 0 auto; padding: 20px 16px 80px; }
+
+  .quick-form { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+  .quick-form h2 { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 10px; }
+  .form-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .form-row input { flex: 1; min-width: 140px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; font-size: 13px; color: var(--text); background: var(--bg); outline: none; }
+  .form-row input:focus { border-color: var(--accent); }
+  .form-row select { border: 1px solid var(--border); border-radius: 8px; padding: 8px 9px; font-size: 12px; color: var(--text); background: var(--bg); outline: none; }
+  .btn { border: none; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: opacity .15s; }
+  .btn:hover { opacity: .85; }
+  .btn-green { background: var(--accent); color: #fff; }
+  .btn-purple { background: #7c3aed; color: #fff; }
+
+  .day-section { margin-bottom: 8px; }
+  .day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .day-title { font-size: 14px; font-weight: 600; }
+  .day-progress { font-size: 11px; color: var(--muted); }
+  .day-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
+  .day-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .4s; }
+
+  .todo-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 11px 12px; margin-bottom: 5px; display: flex; align-items: flex-start; gap: 10px; }
+  .todo-item.done { opacity: .5; }
+  .todo-item.done .todo-text { text-decoration: line-through; color: var(--muted); }
+  .todo-item.completing { animation: pop .45s ease; }
+  @keyframes pop { 0%{transform:scale(1)} 35%{transform:scale(1.03);background:#f0fff4} 70%{transform:scale(.99)} 100%{transform:scale(1)} }
+
+  .check-btn { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); background: none; cursor: pointer; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+  .check-btn:hover { border-color: var(--accent); }
+  .check-btn.checked { background: var(--accent); border-color: var(--accent); }
+  .check-btn svg { width: 10px; height: 10px; fill: none; stroke: #fff; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; display: none; }
+  .check-btn.checked svg { display: block; }
+
+  .todo-body { flex: 1; min-width: 0; }
+  .todo-text { font-size: 13px; line-height: 1.4; }
+  .todo-meta { margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+  .who-pill { font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 20px; }
+  .del-btn { background: none; border: none; cursor: pointer; color: var(--border); font-size: 15px; padding: 2px 4px; transition: color .15s; flex-shrink: 0; }
+  .del-btn:hover { color: var(--danger); }
+  .edit-btn { background: none; border: none; cursor: pointer; color: var(--border); padding: 2px 4px; transition: color .15s; flex-shrink: 0; display: flex; align-items: center; }
+  .edit-btn:hover { color: var(--accent); }
+  .edit-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .edit-row { display: none; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .edit-row.open { display: flex; }
+  .edit-row input { flex: 1; min-width: 120px; border: 1px solid var(--border); border-radius: 7px; padding: 6px 10px; font-size: 12px; color: var(--text); background: var(--bg); outline: none; }
+  .edit-row input:focus { border-color: var(--accent); }
+  .edit-row select { border: 1px solid var(--border); border-radius: 7px; padding: 6px 8px; font-size: 11px; color: var(--text); background: var(--bg); outline: none; }
+  .save-btn { background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 6px 12px; font-size: 12px; font-weight: 500; cursor: pointer; }
+  .cancel-btn { background: none; border: 1px solid var(--border); border-radius: 7px; padding: 6px 10px; font-size: 12px; cursor: pointer; color: var(--muted); }
+
+  .empty { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; }
+  .loading { text-align: center; padding: 48px; color: var(--muted); font-size: 13px; }
+
+  .confetti-wrap { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; overflow: hidden; }
+  .confetti-piece { position: absolute; border-radius: 2px; animation: cffall 1.3s ease-in forwards; }
+  @keyframes cffall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(105vh) rotate(540deg);opacity:0} }
+</style>
+</head>
+<body>
+<div class="confetti-wrap" id="confetti"></div>
+
+<header>
+  <div class="header-top">
+    <div class="logo"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg></div>
+    <div><h1>Renovierung Heller</h1><p id="progress-text">Wird geladen...</p></div>
+  </div>
+  <div class="overall-bar"><div class="overall-fill" id="overall-fill" style="width:0%"></div></div>
+</header>
+
+<div class="day-tabs" id="day-tabs"></div>
+
+<div class="container">
+  <div class="quick-form">
+    <h2>Kinder betreuen — Tagesdienst</h2>
+    <div class="form-row">
+      <select id="kinder-day"><option>Montag</option><option>Dienstag</option><option>Mittwoch</option><option>Donnerstag</option><option>Freitag</option><option>Samstag</option><option>Sonntag</option></select>
+      <select id="kinder-who"><option>Lili</option><option>Jonas</option><option>Ralf</option><option>Marlies</option><option>Alle</option></select>
+      <button class="btn btn-purple" onclick="addKinder()">+ Eintragen</button>
+    </div>
+  </div>
+
+  <div class="quick-form" style="margin-bottom:20px;">
+    <h2>Aufgabe hinzufügen</h2>
+    <div class="form-row">
+      <input type="text" id="task-input" placeholder="Neue Aufgabe..." maxlength="120">
+      <select id="day-select"><option>Montag</option><option>Dienstag</option><option>Mittwoch</option><option>Donnerstag</option><option>Freitag</option><option>Samstag</option><option>Sonntag</option></select>
+      <select id="who-select"><option>Jonas</option><option>Ralf</option><option>Marlies</option><option>Lili</option><option>Alle</option></select>
+      <button class="btn btn-green" onclick="addTodo()">+ Hinzufügen</button>
+    </div>
+  </div>
+
+  <div id="todo-list"><div class="loading">Verbinde...</div></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, push, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "DEIN_API_KEY",
+  authDomain: "DEIN_PROJECT.firebaseapp.com",
+  databaseURL: "https://DEIN_PROJECT-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "DEIN_PROJECT",
+  storageBucket: "DEIN_PROJECT.appspot.com",
+  messagingSenderId: "DEINE_ID",
+  appId: "DEINE_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const todosRef = ref(db, 'todos');
+
+const DAYS = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+const WHO_COLORS = {
+  Jonas:   { bg: '#dbeafe', color: '#1d4ed8' },
+  Ralf:    { bg: '#dcfce7', color: '#166534' },
+  Marlies: { bg: '#fef9c3', color: '#854d0e' },
+  Lili:    { bg: '#ede9fe', color: '#5b21b6' },
+  Alle:    { bg: '#fce7f3', color: '#9d174d' }
+};
+
+const SEED = [
+  { day:'Montag',     who:'Jonas',   text:'Alle Materialien auspacken und sortieren (Farben, Vlies, Kleister, Heizkörper)',  done:true  },
+  { day:'Montag',     who:'Jonas',   text:'Alle Holzfenster mit 120er Schleifpapier anschleifen',                            done:false },
+  { day:'Montag',     who:'Lili',    text:'Kinder betreuen',                                                                  done:false },
+  { day:'Dienstag',   who:'Jonas',   text:'Erster Anstrich weißer Holzlack auf alle Fenster',                                done:false },
+  { day:'Dienstag',   who:'Jonas',   text:'Schlafzimmerboden mit Abdeckfolie schützen',                                      done:false },
+  { day:'Dienstag',   who:'Lili',    text:'Kinder betreuen',                                                                  done:false },
+  { day:'Mittwoch',   who:'Jonas',   text:'Zweiter Anstrich Holzlack auf Fenster (Fenster danach fertig)',                   done:false },
+  { day:'Mittwoch',   who:'Jonas',   text:'Schlafzimmerdecke streichen — 1 Anstrich Alpina Weiß',                           done:false },
+  { day:'Mittwoch',   who:'Lili',    text:'Kinder betreuen',                                                                  done:false },
+  { day:'Donnerstag', who:'Jonas',   text:'Schlafzimmerdecke kontrollieren — 2. Anstrich falls fleckig',                    done:false },
+  { day:'Donnerstag', who:'Jonas',   text:'Esszimmerdecke streichen — 1 Anstrich Alpina Weiß',                              done:false },
+  { day:'Donnerstag', who:'Jonas',   text:'Brombeere-Eimer prüfen — mindestens 4,4 L vorhanden?',                           done:false },
+  { day:'Donnerstag', who:'Lili',    text:'Kinder betreuen',                                                                  done:false },
+  { day:'Freitag',    who:'Ralf',    text:'Schornsteinfugen prüfen — schleifen + dünne Egalineschicht falls nötig',         done:false },
+  { day:'Freitag',    who:'Ralf',    text:'Bodendielen mit MS-Polymer-Kleber verkleben (Zahnspachtel, 24h beschweren)',      done:false },
+  { day:'Freitag',    who:'Jonas',   text:'Vlies an allen 4 Schlafzimmerwänden anbringen (mit Ralf ab 9 Uhr)',               done:false },
+  { day:'Freitag',    who:'Marlies', text:'Kommt 14:00 — restliche Vlieswände helfen fertigstellen',                        done:false },
+  { day:'Freitag',    who:'Lili',    text:'Kinder betreuen (ganzer Tag)',                                                     done:false },
+  { day:'Samstag',    who:'Alle',    text:'1. Anstrich Schlafzimmer — Sand (Wände 1–3) + Brombeere (Wand 4)',               done:false },
+  { day:'Samstag',    who:'Alle',    text:'2. Anstrich Schlafzimmer nach 2–3h — ggf. 3. Anstrich Brombeere',               done:false },
+  { day:'Samstag',    who:'Jonas',   text:'Vlies Esszimmer beginnen während Wände trocknen',                                 done:false },
+  { day:'Samstag',    who:'Ralf',    text:'Bodendielen kontrollieren — Tape entfernen, Haftung prüfen',                     done:false },
+  { day:'Samstag',    who:'Alle',    text:'Bett zurück ins Schlafzimmer bringen',                                            done:false },
+  { day:'Samstag',    who:'Lili',    text:'Kinder betreuen (ganzer Tag)',                                                     done:false },
+  { day:'Sonntag',    who:'Jonas',   text:'Esszimmer-Vlies fertigstellen (falls Samstag nicht abgeschlossen)',               done:false },
+  { day:'Sonntag',    who:'Jonas',   text:'Esszimmer streichen — 2× Sand + 2× Pistazie (verschiedene Wände gleichzeitig)', done:false },
+  { day:'Sonntag',    who:'Marlies', text:'Esszimmer streichen parallel (Pistazie-Wand)',                                    done:false },
+  { day:'Sonntag',    who:'Jonas',   text:'Büro-Akzentwand — Vlies anbringen + 2× Weiß streichen',                         done:false },
+  { day:'Sonntag',    who:'Marlies', text:'Büro-Akzentwand mithelfen',                                                       done:false },
+];
+
+let todos = {};
+let activeDay = 'Montag';
+
+async function seedIfEmpty() {
+  const snap = await get(todosRef);
+  if (!snap.exists()) {
+    let t = Date.now();
+    for (const task of SEED) {
+      await push(todosRef, { ...task, created: t++ });
+    }
+  }
+}
+seedIfEmpty();
+
+onValue(todosRef, snap => {
+  todos = snap.val() || {};
+  renderTabs();
+  renderList();
+});
+
+function renderTabs() {
+  const arr = Object.values(todos);
+  document.getElementById('day-tabs').innerHTML = DAYS.map(day => {
+    const items = arr.filter(t => t.day === day);
+    const done = items.filter(t => t.done).length;
+    const active = day === activeDay ? ' active' : '';
+    return `<button class="day-tab${active}" onclick="setDay('${day}')">${day.substring(0,2)}<span class="tab-count">${done}/${items.length}</span></button>`;
+  }).join('');
+}
+
+window.setDay = function(day) { activeDay = day; renderTabs(); renderList(); };
+
+function renderList() {
+  const arr = Object.entries(todos).map(([id,t]) => ({id,...t}));
+  const done = arr.filter(t => t.done).length;
+  const pct = arr.length ? Math.round(done/arr.length*100) : 0;
+  document.getElementById('progress-text').textContent = `${done} von ${arr.length} erledigt (${pct}%)`;
+  document.getElementById('overall-fill').style.width = pct + '%';
+
+  const items = arr.filter(t => t.day === activeDay).sort((a,b) => a.created - b.created);
+  const list = document.getElementById('todo-list');
+  if (!items.length) { list.innerHTML = '<div class="empty">Keine Aufgaben für diesen Tag.</div>'; return; }
+
+  const dayDone = items.filter(t => t.done).length;
+  const dayPct = Math.round(dayDone/items.length*100);
+
+  let html = `<div class="day-section">
+    <div class="day-header"><span class="day-title">${activeDay}</span><span class="day-progress">${dayDone} von ${items.length} erledigt</span></div>
+    <div class="day-bar"><div class="day-bar-fill" style="width:${dayPct}%"></div></div>`;
+
+  items.forEach(t => {
+    const wc = WHO_COLORS[t.who] || { bg:'#eee', color:'#555' };
+    const whoOpts = ['Jonas','Ralf','Marlies','Lili','Alle'].map(w => `<option${w===t.who?' selected':''}>${w}</option>`).join('');
+    html += `<div class="todo-item${t.done?' done':''}" id="item-${t.id}">
+      <button class="check-btn${t.done?' checked':''}" onclick="toggle('${t.id}',${t.done})">
+        <svg viewBox="0 0 10 10"><polyline points="1,5.5 3.8,8.5 9,1.5"/></svg>
+      </button>
+      <div class="todo-body">
+        <div class="todo-text">${esc(t.text)}</div>
+        <div class="todo-meta"><span class="who-pill" style="background:${wc.bg};color:${wc.color}">${t.who}</span></div>
+        <div class="edit-row" id="edit-${t.id}">
+          <input type="text" id="edit-text-${t.id}" value="${esc(t.text)}" maxlength="120">
+          <select id="edit-who-${t.id}">${whoOpts}</select>
+          <button class="save-btn" onclick="saveEdit('${t.id}')">Speichern</button>
+          <button class="cancel-btn" onclick="closeEdit('${t.id}')">Abbrechen</button>
+        </div>
+      </div>
+      <button class="edit-btn" onclick="openEdit('${t.id}')" title="Bearbeiten">
+        <svg viewBox="0 0 14 14"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/><path d="M8 4l2 2"/></svg>
+      </button>
+      <button class="del-btn" onclick="del('${t.id}')">&times;</button>
+    </div>`;
+  });
+  html += '</div>';
+  list.innerHTML = html;
+}
+
+window.toggle = function(id, wasDone) {
+  if (!wasDone) {
+    const el = document.getElementById('item-' + id);
+    if (el) { el.classList.add('completing'); setTimeout(() => el.classList.remove('completing'), 500); }
+    confetti();
+  }
+  update(ref(db,'todos/'+id), { done: !wasDone });
+};
+window.del = function(id) { remove(ref(db,'todos/'+id)); };
+window.openEdit = function(id) {
+  document.getElementById('edit-'+id).classList.add('open');
+};
+window.closeEdit = function(id) {
+  document.getElementById('edit-'+id).classList.remove('open');
+};
+window.saveEdit = function(id) {
+  const text = document.getElementById('edit-text-'+id).value.trim();
+  const who = document.getElementById('edit-who-'+id).value;
+  if (!text) return;
+  update(ref(db,'todos/'+id), { text, who });
+};
+window.addTodo = function() {
+  const text = document.getElementById('task-input').value.trim();
+  if (!text) return;
+  push(todosRef, { text, day: document.getElementById('day-select').value, who: document.getElementById('who-select').value, done: false, created: Date.now() });
+  document.getElementById('task-input').value = '';
+};
+window.addKinder = function() {
+  push(todosRef, { text: 'Kinder betreuen', day: document.getElementById('kinder-day').value, who: document.getElementById('kinder-who').value, done: false, created: Date.now() });
+};
+document.getElementById('task-input').addEventListener('keydown', e => { if(e.key==='Enter') window.addTodo(); });
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function confetti() {
+  const wrap = document.getElementById('confetti');
+  const colors = ['#2d6a4f','#52b788','#d8f3dc','#f4a261','#e76f51','#7c3aed'];
+  for (let i=0; i<30; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    const s = 6+Math.random()*7;
+    el.style.cssText = `left:${Math.random()*100}%;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};width:${s}px;height:${s}px;animation-delay:${Math.random()*.4}s;animation-duration:${.9+Math.random()*.7}s;`;
+    wrap.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  }
+}
+</script>
+</body>
+</html>
