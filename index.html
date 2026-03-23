@@ -128,22 +128,11 @@
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const firebaseConfig = {
-  apiKey: "DEIN_API_KEY",
-  authDomain: "DEIN_PROJECT.firebaseapp.com",
-  databaseURL: "https://DEIN_PROJECT-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "DEIN_PROJECT",
-  storageBucket: "DEIN_PROJECT.appspot.com",
-  messagingSenderId: "DEINE_ID",
-  appId: "DEINE_APP_ID"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const todosRef = ref(db, 'todos');
+const SUPABASE_URL = 'https://mixaxkywkojoclgbjjur.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1peGF4a3l3a29qb2NsZ2JqanVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5MTA5ODEsImV4cCI6MjA4MjQ4Njk4MX0._rvGSaVi4VERdWbA-Z229rhe4KyJH2FU5pHqLkYjtc4';
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const DAYS = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
 const WHO_COLORS = {
@@ -186,30 +175,34 @@ const SEED = [
   { day:'Sonntag',    who:'Marlies', text:'Büro-Akzentwand mithelfen',                                                       done:false },
 ];
 
-let todos = {};
+let todos = [];
 let activeDay = 'Montag';
 
-async function seedIfEmpty() {
-  const snap = await get(todosRef);
-  if (!snap.exists()) {
-    let t = Date.now();
-    for (const task of SEED) {
-      await push(todosRef, { ...task, created: t++ });
-    }
+async function loadTodos() {
+  const { data, error } = await sb.from('reno_todos').select('*').order('created_at');
+  if (error) { document.getElementById('todo-list').innerHTML = '<div class="empty">Fehler: ' + esc(error.message) + '</div>'; return; }
+  if (!data.length) {
+    const rows = SEED.map((t, i) => ({ ...t, created_at: Date.now() + i }));
+    const { data: seeded } = await sb.from('reno_todos').insert(rows).select();
+    todos = seeded || [];
+  } else {
+    todos = data;
   }
-}
-seedIfEmpty();
-
-onValue(todosRef, snap => {
-  todos = snap.val() || {};
   renderTabs();
   renderList();
-});
+}
+loadTodos();
+
+// Realtime sync
+sb.channel('reno_todos_changes')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'reno_todos' }, () => {
+    loadTodos();
+  })
+  .subscribe();
 
 function renderTabs() {
-  const arr = Object.values(todos);
   document.getElementById('day-tabs').innerHTML = DAYS.map(day => {
-    const items = arr.filter(t => t.day === day);
+    const items = todos.filter(t => t.day === day);
     const done = items.filter(t => t.done).length;
     const active = day === activeDay ? ' active' : '';
     return `<button class="day-tab${active}" onclick="setDay('${day}')">${day.substring(0,2)}<span class="tab-count">${done}/${items.length}</span></button>`;
@@ -219,13 +212,12 @@ function renderTabs() {
 window.setDay = function(day) { activeDay = day; renderTabs(); renderList(); };
 
 function renderList() {
-  const arr = Object.entries(todos).map(([id,t]) => ({id,...t}));
-  const done = arr.filter(t => t.done).length;
-  const pct = arr.length ? Math.round(done/arr.length*100) : 0;
-  document.getElementById('progress-text').textContent = `${done} von ${arr.length} erledigt (${pct}%)`;
+  const done = todos.filter(t => t.done).length;
+  const pct = todos.length ? Math.round(done/todos.length*100) : 0;
+  document.getElementById('progress-text').textContent = `${done} von ${todos.length} erledigt (${pct}%)`;
   document.getElementById('overall-fill').style.width = pct + '%';
 
-  const items = arr.filter(t => t.day === activeDay).sort((a,b) => a.created - b.created);
+  const items = todos.filter(t => t.day === activeDay);
   const list = document.getElementById('todo-list');
   if (!items.length) { list.innerHTML = '<div class="empty">Keine Aufgaben für diesen Tag.</div>'; return; }
 
@@ -263,35 +255,35 @@ function renderList() {
   list.innerHTML = html;
 }
 
-window.toggle = function(id, wasDone) {
+window.toggle = async function(id, wasDone) {
   if (!wasDone) {
     const el = document.getElementById('item-' + id);
     if (el) { el.classList.add('completing'); setTimeout(() => el.classList.remove('completing'), 500); }
     confetti();
   }
-  update(ref(db,'todos/'+id), { done: !wasDone });
+  await sb.from('reno_todos').update({ done: !wasDone }).eq('id', id);
 };
-window.del = function(id) { remove(ref(db,'todos/'+id)); };
+window.del = async function(id) { await sb.from('reno_todos').delete().eq('id', id); };
 window.openEdit = function(id) {
   document.getElementById('edit-'+id).classList.add('open');
 };
 window.closeEdit = function(id) {
   document.getElementById('edit-'+id).classList.remove('open');
 };
-window.saveEdit = function(id) {
+window.saveEdit = async function(id) {
   const text = document.getElementById('edit-text-'+id).value.trim();
   const who = document.getElementById('edit-who-'+id).value;
   if (!text) return;
-  update(ref(db,'todos/'+id), { text, who });
+  await sb.from('reno_todos').update({ text, who }).eq('id', id);
 };
-window.addTodo = function() {
+window.addTodo = async function() {
   const text = document.getElementById('task-input').value.trim();
   if (!text) return;
-  push(todosRef, { text, day: document.getElementById('day-select').value, who: document.getElementById('who-select').value, done: false, created: Date.now() });
+  await sb.from('reno_todos').insert({ text, day: document.getElementById('day-select').value, who: document.getElementById('who-select').value, done: false, created_at: Date.now() });
   document.getElementById('task-input').value = '';
 };
-window.addKinder = function() {
-  push(todosRef, { text: 'Kinder betreuen', day: document.getElementById('kinder-day').value, who: document.getElementById('kinder-who').value, done: false, created: Date.now() });
+window.addKinder = async function() {
+  await sb.from('reno_todos').insert({ text: 'Kinder betreuen', day: document.getElementById('kinder-day').value, who: document.getElementById('kinder-who').value, done: false, created_at: Date.now() });
 };
 document.getElementById('task-input').addEventListener('keydown', e => { if(e.key==='Enter') window.addTodo(); });
 
