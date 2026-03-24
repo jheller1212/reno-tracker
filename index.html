@@ -286,8 +286,12 @@ window.toggle = async function(id, wasDone) {
     confetti();
   }
   await sb.from('reno_todos').update({ done: !wasDone }).eq('id', id);
+  await loadTodos();
 };
-window.del = async function(id) { await sb.from('reno_todos').delete().eq('id', id); };
+window.del = async function(id) {
+  await sb.from('reno_todos').delete().eq('id', id);
+  await loadTodos();
+};
 window.openEdit = function(id) {
   document.getElementById('edit-'+id).classList.add('open');
 };
@@ -299,15 +303,18 @@ window.saveEdit = async function(id) {
   const who = document.getElementById('edit-who-'+id).value;
   if (!text) return;
   await sb.from('reno_todos').update({ text, who }).eq('id', id);
+  await loadTodos();
 };
 window.addTodo = async function() {
   const text = document.getElementById('task-input').value.trim();
   if (!text) return;
   await sb.from('reno_todos').insert({ text, day: document.getElementById('day-select').value, who: document.getElementById('who-select').value, done: false, created_at: Date.now() });
   document.getElementById('task-input').value = '';
+  await loadTodos();
 };
 window.addKinder = async function() {
   await sb.from('reno_todos').insert({ text: 'Kinder betreuen', day: document.getElementById('kinder-day').value, who: document.getElementById('kinder-who').value, done: false, created_at: Date.now() });
+  await loadTodos();
 };
 document.getElementById('task-input').addEventListener('keydown', e => { if(e.key==='Enter') window.addTodo(); });
 
