@@ -213,9 +213,12 @@ const WHO_COLORS = {
   Lili:    { bg: '#ede9fe', color: '#5b21b6' },
   Alle:    { bg: '#fce7f3', color: '#9d174d' }
 };
-const HOUR_START = 7;
-const HOUR_END = 21;
 const HOUR_H = 56;
+const WEEKDAY_EVENING = ['Montag','Dienstag','Mittwoch','Donnerstag'];
+function dayHours(day) {
+  if (WEEKDAY_EVENING.includes(day)) return { start: 18, end: 21 };
+  return { start: 7, end: 21 };
+}
 
 let todos = [];
 let editId = null;
@@ -223,23 +226,44 @@ let editId = null;
 // Populate selects
 const hourSel = document.getElementById('hour-select');
 const durSel = document.getElementById('duration-select');
-for (let h = HOUR_START; h < HOUR_END; h++) {
-  hourSel.innerHTML += `<option value="${h}">${String(h).padStart(2,'0')}:00</option>`;
+function populateHourSelect(sel, hStart, hEnd, selected) {
+  sel.innerHTML = '';
+  for (let h = hStart; h < hEnd; h++) {
+    sel.innerHTML += `<option value="${h}"${h == selected ? ' selected' : ''}>${String(h).padStart(2,'0')}:00</option>`;
+  }
 }
-hourSel.value = '8';
-for (let d = 1; d <= 8; d++) {
-  durSel.innerHTML += `<option value="${d}">${d}h</option>`;
+function updateAddFormHours() {
+  const day = document.getElementById('day-select').value;
+  const { start, end } = dayHours(day);
+  populateHourSelect(hourSel, start, end, start);
+  durSel.innerHTML = '';
+  for (let d = 1; d <= (end - start); d++) {
+    durSel.innerHTML += `<option value="${d}">${d}h</option>`;
+  }
 }
+document.getElementById('day-select').addEventListener('change', updateAddFormHours);
+updateAddFormHours();
 
 // Populate edit selects
 const editDaySel = document.getElementById('edit-day');
 DAYS.forEach(d => { editDaySel.innerHTML += `<option>${d}</option>`; });
 const editHourSel = document.getElementById('edit-hour');
-for (let h = HOUR_START; h < HOUR_END; h++) {
-  editHourSel.innerHTML += `<option value="${h}">${String(h).padStart(2,'0')}:00</option>`;
-}
 const editDurSel = document.getElementById('edit-duration');
-for (let d = 1; d <= 8; d++) {
+function updateEditFormHours() {
+  const day = editDaySel.value;
+  const { start, end } = dayHours(day);
+  const curHour = parseInt(editHourSel.value) || start;
+  const curDur = parseInt(editDurSel.value) || 1;
+  populateHourSelect(editHourSel, start, end, Math.max(start, Math.min(end - 1, curHour)));
+  editDurSel.innerHTML = '';
+  for (let d = 1; d <= (end - start); d++) {
+    editDurSel.innerHTML += `<option value="${d}"${d == curDur ? ' selected' : ''}>${d}h</option>`;
+  }
+}
+editDaySel.addEventListener('change', updateEditFormHours);
+// Initial populate with full range (will be updated on edit open)
+populateHourSelect(editHourSel, 7, 21, 8);
+for (let d = 1; d <= 14; d++) {
   editDurSel.innerHTML += `<option value="${d}">${d}h</option>`;
 }
 
@@ -318,9 +342,10 @@ function renderList() {
 
   const list = document.getElementById('todo-list');
   let html = '';
-  const totalHours = HOUR_END - HOUR_START;
 
   DAYS.forEach(day => {
+    const { start: hStart, end: hEnd } = dayHours(day);
+    const totalHours = hEnd - hStart;
     const items = todos.filter(t => t.day === day);
     const dayDone = items.filter(t => t.done).length;
     const dayPct = items.length ? Math.round(dayDone / items.length * 100) : 0;
@@ -332,16 +357,16 @@ function renderList() {
         <span class="day-progress">${dayDone}/${items.length}</span>
       </div>
       <div class="day-bar"><div class="day-bar-fill" style="width:${dayPct}%"></div></div>
-      <div class="timeline" style="height:${totalHours * HOUR_H}px" data-day="${day}">`;
+      <div class="timeline" style="height:${totalHours * HOUR_H}px" data-day="${day}" data-hstart="${hStart}" data-hend="${hEnd}">`;
 
-    for (let h = HOUR_START; h < HOUR_END; h++) {
+    for (let h = hStart; h < hEnd; h++) {
       html += `<div class="hour-row" data-hour="${h}"><span class="hour-label">${String(h).padStart(2, '0')}:00</span></div>`;
     }
 
     items.forEach(t => {
-      const start = t.start_hour ?? 8;
+      const start = t.start_hour ?? 18;
       const dur = t.duration ?? 1;
-      const top = (start - HOUR_START) * HOUR_H;
+      const top = (start - hStart) * HOUR_H;
       const height = dur * HOUR_H - 2;
       const people = t.who.split(',').map(s => s.trim()).filter(Boolean);
       const firstPerson = people[0] || 'Jonas';
@@ -357,7 +382,7 @@ function renderList() {
         return `<span class="who-pill" style="background:${c.bg};color:${c.color}">${p}</span>`;
       }).join('');
 
-      const endHour = Math.min(start + dur, HOUR_END);
+      const endHour = Math.min(start + dur, hEnd);
       const timeLabel = `${String(start).padStart(2, '0')}–${String(endHour).padStart(2, '0')}`;
 
       html += `<div class="task-block${t.done ? ' done' : ''}" id="item-${t.id}" data-id="${t.id}"
@@ -411,7 +436,8 @@ window.openEdit = function(id) {
   if (!t) return;
   document.getElementById('edit-text').value = t.text;
   document.getElementById('edit-day').value = t.day;
-  document.getElementById('edit-hour').value = t.start_hour ?? 8;
+  updateEditFormHours();
+  document.getElementById('edit-hour').value = t.start_hour ?? dayHours(t.day).start;
   document.getElementById('edit-duration').value = t.duration ?? 1;
   const people = t.who.split(',').map(s => s.trim()).filter(Boolean);
   document.querySelectorAll('#edit-who .who-toggle').forEach(btn => {
@@ -484,7 +510,9 @@ window.addTodo = async function() {
 };
 
 window.addKinder = async function() {
-  await sb.from('reno_todos').insert({ text: 'Kinder betreuen', day: document.getElementById('kinder-day').value, who: document.getElementById('kinder-who').value, done: false, start_hour: 8, duration: 10, created_at: Date.now() });
+  const kDay = document.getElementById('kinder-day').value;
+  const { start, end } = dayHours(kDay);
+  await sb.from('reno_todos').insert({ text: 'Kinder betreuen', day: kDay, who: document.getElementById('kinder-who').value, done: false, start_hour: start, duration: end - start, created_at: Date.now() });
   await loadTodos();
 };
 
@@ -510,16 +538,16 @@ function setupResize() {
       startY = e.clientY;
       startDur = todos.find(t => t.id == taskId)?.duration ?? 1;
 
+      const hEnd = parseInt(timeline.dataset.hend);
       const onMove = e2 => {
         const dy = e2.clientY - startY;
         const dHours = Math.round(dy / HOUR_H);
-        const newDur = Math.max(1, Math.min(HOUR_END - (todos.find(t => t.id == taskId)?.start_hour ?? 8), startDur + dHours));
+        const newDur = Math.max(1, Math.min(hEnd - (todos.find(t => t.id == taskId)?.start_hour ?? 18), startDur + dHours));
         block.style.height = (newDur * HOUR_H - 2) + 'px';
-        // Update time label
         const t = todos.find(t => t.id == taskId);
-        const s = t?.start_hour ?? 8;
+        const s = t?.start_hour ?? 18;
         const timeEl = block.querySelector('.task-block-time');
-        if (timeEl) timeEl.textContent = `${String(s).padStart(2, '0')}–${String(Math.min(s + newDur, HOUR_END)).padStart(2, '0')}`;
+        if (timeEl) timeEl.textContent = `${String(s).padStart(2, '0')}–${String(Math.min(s + newDur, hEnd)).padStart(2, '0')}`;
         block._pendingDur = newDur;
       };
       const onUp = async () => {
@@ -539,6 +567,8 @@ function setupResize() {
       e.stopPropagation();
       taskId = handle.dataset.id;
       const block = handle.parentElement;
+      const tlEl = block.parentElement;
+      const thEnd = parseInt(tlEl.dataset.hend);
       startY = e.touches[0].clientY;
       startDur = todos.find(t => t.id == taskId)?.duration ?? 1;
 
@@ -546,12 +576,12 @@ function setupResize() {
         e2.preventDefault();
         const dy = e2.touches[0].clientY - startY;
         const dHours = Math.round(dy / HOUR_H);
-        const newDur = Math.max(1, Math.min(HOUR_END - (todos.find(t => t.id == taskId)?.start_hour ?? 8), startDur + dHours));
+        const newDur = Math.max(1, Math.min(thEnd - (todos.find(t => t.id == taskId)?.start_hour ?? 18), startDur + dHours));
         block.style.height = (newDur * HOUR_H - 2) + 'px';
         const t = todos.find(t => t.id == taskId);
-        const s = t?.start_hour ?? 8;
+        const s = t?.start_hour ?? 18;
         const timeEl = block.querySelector('.task-block-time');
-        if (timeEl) timeEl.textContent = `${String(s).padStart(2, '0')}–${String(Math.min(s + newDur, HOUR_END)).padStart(2, '0')}`;
+        if (timeEl) timeEl.textContent = `${String(s).padStart(2, '0')}–${String(Math.min(s + newDur, thEnd)).padStart(2, '0')}`;
         block._pendingDur = newDur;
       };
       const onEnd = async () => {
@@ -581,15 +611,16 @@ function setupTaskDrag() {
 
   // Timelines accept task drops
   document.querySelectorAll('.timeline').forEach(tl => {
+    const tlStart = parseInt(tl.dataset.hstart);
+    const tlEnd = parseInt(tl.dataset.hend);
     tl.addEventListener('dragover', e => {
       if (!e.dataTransfer.types.includes('text/drag-task')) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
-      // Highlight hour row
       tl.querySelectorAll('.hour-row.drop-highlight').forEach(r => r.classList.remove('drop-highlight'));
       const rect = tl.getBoundingClientRect();
       const y = e.clientY - rect.top;
-      const hour = Math.floor(y / HOUR_H) + HOUR_START;
+      const hour = Math.floor(y / HOUR_H) + tlStart;
       const row = tl.querySelector(`.hour-row[data-hour="${hour}"]`);
       if (row) row.classList.add('drop-highlight');
     });
@@ -605,15 +636,14 @@ function setupTaskDrag() {
       e.preventDefault();
       const rect = tl.getBoundingClientRect();
       const y = e.clientY - rect.top;
-      const hour = Math.max(HOUR_START, Math.min(HOUR_END - 1, Math.floor(y / HOUR_H) + HOUR_START));
+      const hour = Math.max(tlStart, Math.min(tlEnd - 1, Math.floor(y / HOUR_H) + tlStart));
       const targetDay = tl.dataset.day;
       const todo = todos.find(t => t.id == taskId);
       if (!todo) return;
       const dur = todo.duration ?? 1;
-      const clampedHour = Math.min(hour, HOUR_END - dur);
-      const updates = { start_hour: clampedHour };
+      const clampedDur = Math.min(dur, tlEnd - hour);
+      const updates = { start_hour: hour, duration: clampedDur };
       if (todo.day !== targetDay) updates.day = targetDay;
-      if (clampedHour === (todo.start_hour ?? 8) && !updates.day) return;
       await sb.from('reno_todos').update(updates).eq('id', taskId);
       await loadTodos();
     });
@@ -654,13 +684,15 @@ function setupTaskDrag() {
       if (tl) {
         const rect = tl.getBoundingClientRect();
         const y = t.clientY - rect.top;
-        const hour = Math.max(HOUR_START, Math.min(HOUR_END - 1, Math.floor(y / HOUR_H) + HOUR_START));
+        const tStart = parseInt(tl.dataset.hstart);
+        const tEnd = parseInt(tl.dataset.hend);
+        const hour = Math.max(tStart, Math.min(tEnd - 1, Math.floor(y / HOUR_H) + tStart));
         const targetDay = tl.dataset.day;
         const todo = todos.find(td => td.id == block.dataset.id);
         if (todo) {
           const dur = todo.duration ?? 1;
-          const clampedHour = Math.min(hour, HOUR_END - dur);
-          const updates = { start_hour: clampedHour };
+          const clampedDur = Math.min(dur, tEnd - hour);
+          const updates = { start_hour: hour, duration: clampedDur };
           if (todo.day !== targetDay) updates.day = targetDay;
           await sb.from('reno_todos').update(updates).eq('id', block.dataset.id);
           await loadTodos();
