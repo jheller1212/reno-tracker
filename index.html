@@ -42,6 +42,9 @@
   .form-row input { flex: 1; min-width: 140px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; font-size: 13px; color: var(--text); background: var(--bg); outline: none; }
   .form-row input:focus { border-color: var(--accent); }
   .form-row select { border: 1px solid var(--border); border-radius: 8px; padding: 8px 9px; font-size: 12px; color: var(--text); background: var(--bg); outline: none; }
+  .who-toggles { display: flex; gap: 4px; flex-wrap: wrap; }
+  .who-toggle { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; border: 2px solid var(--border); background: none; cursor: pointer; transition: all .15s; }
+  .who-toggle.on { border-color: currentColor; }
   .btn { border: none; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: opacity .15s; }
   .btn:hover { opacity: .85; }
   .btn-green { background: var(--accent); color: #fff; }
@@ -143,7 +146,7 @@
     <div class="form-row">
       <input type="text" id="task-input" placeholder="Neue Aufgabe..." maxlength="120">
       <select id="day-select"><option>Montag</option><option>Dienstag</option><option>Mittwoch</option><option>Donnerstag</option><option>Freitag</option><option>Samstag</option><option>Sonntag</option></select>
-      <select id="who-select"><option>Jonas</option><option>Ralf</option><option>Marlies</option><option>Lili</option><option>Alle</option></select>
+      <div class="who-toggles" id="who-toggles"></div>
       <button class="btn btn-green" onclick="addTodo()">+ Hinzufügen</button>
     </div>
   </div>
@@ -159,6 +162,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const DAYS = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+const NAMES = ['Jonas','Ralf','Marlies','Lili'];
 const WHO_COLORS = {
   Jonas:   { bg: '#dbeafe', color: '#1d4ed8' },
   Ralf:    { bg: '#dcfce7', color: '#166534' },
@@ -253,18 +257,27 @@ function renderList() {
     <div class="day-bar"><div class="day-bar-fill" style="width:${dayPct}%"></div></div>`;
 
   items.forEach(t => {
-    const wc = WHO_COLORS[t.who] || { bg:'#eee', color:'#555' };
-    const whoOpts = ['Jonas','Ralf','Marlies','Lili','Alle'].map(w => `<option${w===t.who?' selected':''}>${w}</option>`).join('');
+    const people = t.who.split(',').map(s => s.trim()).filter(Boolean);
+    const pills = people.map(p => {
+      const wc = WHO_COLORS[p] || { bg:'#eee', color:'#555' };
+      return `<span class="who-pill" style="background:${wc.bg};color:${wc.color}">${p}</span>`;
+    }).join('');
+    const editToggles = NAMES.map(n => {
+      const on = people.includes(n) ? ' on' : '';
+      const wc = WHO_COLORS[n];
+      const style = on ? `background:${wc.bg};color:${wc.color};border-color:${wc.color}` : `color:${wc.color}`;
+      return `<button type="button" class="who-toggle${on}" style="${style}" onclick="toggleEditWho('${t.id}','${n}')">${n}</button>`;
+    }).join('');
     html += `<div class="todo-item${t.done?' done':''}" id="item-${t.id}">
       <button class="check-btn${t.done?' checked':''}" onclick="toggle('${t.id}',${t.done})">
         <svg viewBox="0 0 10 10"><polyline points="1,5.5 3.8,8.5 9,1.5"/></svg>
       </button>
       <div class="todo-body">
         <div class="todo-text">${esc(t.text)}</div>
-        <div class="todo-meta"><span class="who-pill" style="background:${wc.bg};color:${wc.color}">${t.who}</span></div>
+        <div class="todo-meta">${pills}</div>
         <div class="edit-row" id="edit-${t.id}">
           <input type="text" id="edit-text-${t.id}" value="${esc(t.text)}" maxlength="120">
-          <select id="edit-who-${t.id}">${whoOpts}</select>
+          <div class="who-toggles" id="edit-who-${t.id}">${editToggles}</div>
           <button class="save-btn" onclick="saveEdit('${t.id}')">Speichern</button>
           <button class="cancel-btn" onclick="closeEdit('${t.id}')">Abbrechen</button>
         </div>
@@ -299,18 +312,44 @@ window.openEdit = function(id) {
 window.closeEdit = function(id) {
   document.getElementById('edit-'+id).classList.remove('open');
 };
+window.toggleEditWho = function(id, name) {
+  const container = document.getElementById('edit-who-'+id);
+  const btn = [...container.children].find(b => b.textContent === name);
+  if (!btn) return;
+  btn.classList.toggle('on');
+  const wc = WHO_COLORS[name];
+  if (btn.classList.contains('on')) {
+    btn.style.background = wc.bg; btn.style.borderColor = wc.color;
+  } else {
+    btn.style.background = 'none'; btn.style.borderColor = '';
+  }
+};
 window.saveEdit = async function(id) {
   const text = document.getElementById('edit-text-'+id).value.trim();
-  const who = document.getElementById('edit-who-'+id).value;
-  if (!text) return;
-  await sb.from('reno_todos').update({ text, who }).eq('id', id);
+  const selected = [...document.getElementById('edit-who-'+id).children].filter(b => b.classList.contains('on')).map(b => b.textContent);
+  if (!text || !selected.length) return;
+  await sb.from('reno_todos').update({ text, who: selected.join(',') }).eq('id', id);
   await loadTodos();
+};
+window.toggleAddWho = function(name) {
+  const container = document.getElementById('who-toggles');
+  const btn = [...container.children].find(b => b.textContent === name);
+  if (!btn) return;
+  btn.classList.toggle('on');
+  const wc = WHO_COLORS[name];
+  if (btn.classList.contains('on')) {
+    btn.style.background = wc.bg; btn.style.borderColor = wc.color;
+  } else {
+    btn.style.background = 'none'; btn.style.borderColor = '';
+  }
 };
 window.addTodo = async function() {
   const text = document.getElementById('task-input').value.trim();
-  if (!text) return;
-  await sb.from('reno_todos').insert({ text, day: document.getElementById('day-select').value, who: document.getElementById('who-select').value, done: false, created_at: Date.now() });
+  const selected = [...document.getElementById('who-toggles').children].filter(b => b.classList.contains('on')).map(b => b.textContent);
+  if (!text || !selected.length) return;
+  await sb.from('reno_todos').insert({ text, day: document.getElementById('day-select').value, who: selected.join(','), done: false, created_at: Date.now() });
   document.getElementById('task-input').value = '';
+  [...document.getElementById('who-toggles').children].forEach(b => { b.classList.remove('on'); b.style.background = 'none'; b.style.borderColor = ''; });
   await loadTodos();
 };
 window.addKinder = async function() {
@@ -318,6 +357,12 @@ window.addKinder = async function() {
   await loadTodos();
 };
 document.getElementById('task-input').addEventListener('keydown', e => { if(e.key==='Enter') window.addTodo(); });
+
+// Render add-form who toggles
+document.getElementById('who-toggles').innerHTML = NAMES.map(n => {
+  const wc = WHO_COLORS[n];
+  return `<button type="button" class="who-toggle" style="color:${wc.color}" onclick="toggleAddWho('${n}')">${n}</button>`;
+}).join('');
 
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function confetti() {
