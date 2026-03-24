@@ -272,7 +272,7 @@ function renderList() {
       <button class="edit-btn" onclick="openEdit('${t.id}')" title="Bearbeiten">
         <svg viewBox="0 0 14 14"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/><path d="M8 4l2 2"/></svg>
       </button>
-      <button class="del-btn" onclick="del('${t.id}')">&times;</button>
+      <button class="del-btn" onclick="delTodo('${t.id}')">&times;</button>
     </div>`;
   });
   html += '</div>';
@@ -288,7 +288,8 @@ window.toggle = async function(id, wasDone) {
   await sb.from('reno_todos').update({ done: !wasDone }).eq('id', id);
   await loadTodos();
 };
-window.del = async function(id) {
+window.delTodo = async function(id) {
+  if (!confirm('Aufgabe löschen?')) return;
   await sb.from('reno_todos').delete().eq('id', id);
   await loadTodos();
 };
