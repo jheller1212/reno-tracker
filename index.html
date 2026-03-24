@@ -14,11 +14,12 @@
     --accent: #2d6a4f;
     --danger: #c0392b;
     --radius: 12px;
+    --hour-h: 56px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
 
-  header { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 20px; position: sticky; top: 0; z-index: 10; }
+  header { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 20px; position: sticky; top: 0; z-index: 20; }
   .header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
   .logo { width: 34px; height: 34px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .logo svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
@@ -27,19 +28,19 @@
   .overall-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
   .overall-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .5s; }
 
-  .drag-bar { display: flex; gap: 6px; padding: 8px 16px; background: var(--card); border-bottom: 1px solid var(--border); align-items: center; position: sticky; top: 76px; z-index: 9; }
+  .drag-bar { display: flex; gap: 6px; padding: 8px 16px; background: var(--card); border-bottom: 1px solid var(--border); align-items: center; position: sticky; top: 76px; z-index: 15; }
   .drag-bar-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-right: 4px; }
   .drag-name { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none; }
   .drag-name:active { cursor: grabbing; }
 
-  .container { max-width: 680px; margin: 0 auto; padding: 20px 16px 80px; }
+  .container { max-width: 720px; margin: 0 auto; padding: 16px 16px 80px; }
 
   .quick-form { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
   .quick-form h2 { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 10px; }
   .form-row { display: flex; gap: 6px; flex-wrap: wrap; }
-  .form-row input { flex: 1; min-width: 140px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; font-size: 13px; color: var(--text); background: var(--bg); outline: none; }
-  .form-row input:focus { border-color: var(--accent); }
-  .form-row select { border: 1px solid var(--border); border-radius: 8px; padding: 8px 9px; font-size: 12px; color: var(--text); background: var(--bg); outline: none; }
+  .form-row input, .form-row select { border: 1px solid var(--border); border-radius: 8px; padding: 8px 9px; font-size: 12px; color: var(--text); background: var(--bg); outline: none; }
+  .form-row input { flex: 1; min-width: 140px; font-size: 13px; padding: 8px 11px; }
+  .form-row input:focus, .form-row select:focus { border-color: var(--accent); }
   .who-toggles { display: flex; gap: 4px; flex-wrap: wrap; }
   .who-toggle { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; border: 2px solid var(--border); background: none; cursor: pointer; transition: all .15s; }
   .who-toggle.on { border-color: currentColor; }
@@ -48,78 +49,86 @@
   .btn-green { background: var(--accent); color: #fff; }
   .btn-purple { background: #7c3aed; color: #fff; }
 
-  .day-section { margin-bottom: 20px; }
-  .day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; position: sticky; top: 112px; background: var(--bg); padding: 8px 0 4px; z-index: 5; }
+  /* Day sections */
+  .day-section { margin-bottom: 24px; }
+  .day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; position: sticky; top: 112px; background: var(--bg); padding: 8px 0 4px; z-index: 10; }
   .day-title { font-size: 15px; font-weight: 700; }
   .day-progress { font-size: 11px; color: var(--muted); }
-  .day-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
+  .day-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
   .day-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .4s; }
-  .day-empty { text-align: center; padding: 16px; color: var(--muted); font-size: 12px; font-style: italic; }
 
-  .todo-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 11px 12px; margin-bottom: 5px; display: flex; align-items: flex-start; gap: 10px; }
-  .todo-item.done { opacity: .5; }
-  .todo-item.done .todo-text { text-decoration: line-through; color: var(--muted); }
-  .todo-item.completing { animation: pop .45s ease; }
-  @keyframes pop { 0%{transform:scale(1)} 35%{transform:scale(1.03);background:#f0fff4} 70%{transform:scale(.99)} 100%{transform:scale(1)} }
+  /* Timeline grid */
+  .timeline { position: relative; margin-left: 40px; border-left: 1px solid var(--border); }
+  .hour-row { height: var(--hour-h); border-bottom: 1px solid var(--border); position: relative; }
+  .hour-row:last-child { border-bottom: none; }
+  .hour-label { position: absolute; left: -40px; top: -8px; width: 36px; text-align: right; font-size: 10px; color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .hour-row.drop-highlight { background: rgba(45,106,79,.06); }
 
-  .check-btn { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); background: none; cursor: pointer; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all .2s; }
-  .check-btn:hover { border-color: var(--accent); }
-  .check-btn.checked { background: var(--accent); border-color: var(--accent); }
-  .check-btn svg { width: 10px; height: 10px; fill: none; stroke: #fff; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; display: none; }
-  .check-btn.checked svg { display: block; }
+  /* Task blocks */
+  .task-block { position: absolute; left: 4px; right: 4px; border-radius: 8px; padding: 6px 8px; overflow: hidden; cursor: grab; user-select: none; -webkit-user-select: none; border: 1px solid transparent; transition: box-shadow .15s; z-index: 2; display: flex; flex-direction: column; }
+  .task-block:hover { box-shadow: 0 2px 8px rgba(0,0,0,.1); z-index: 3; }
+  .task-block:active { cursor: grabbing; }
+  .task-block.done { opacity: .45; }
+  .task-block.done .task-block-text { text-decoration: line-through; }
+  .task-block.dragging { opacity: .3; z-index: 1; }
+  .task-block.completing { animation: pop .45s ease; }
+  @keyframes pop { 0%{transform:scale(1)} 35%{transform:scale(1.03)} 70%{transform:scale(.99)} 100%{transform:scale(1)} }
 
-  .todo-body { flex: 1; min-width: 0; }
-  .todo-text { font-size: 13px; line-height: 1.4; }
-  .todo-meta { margin-top: 3px; display: flex; align-items: center; gap: 6px; }
-  .who-pill { font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 20px; }
-  .del-btn { background: none; border: none; cursor: pointer; color: var(--border); font-size: 15px; padding: 2px 4px; transition: color .15s; flex-shrink: 0; }
-  .del-btn:hover { color: var(--danger); }
-  .edit-btn { background: none; border: none; cursor: pointer; color: var(--border); padding: 2px 4px; transition: color .15s; flex-shrink: 0; display: flex; align-items: center; }
-  .edit-btn:hover { color: var(--accent); }
-  .edit-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .edit-row { display: none; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-  .edit-row.open { display: flex; }
-  .edit-row input { flex: 1; min-width: 120px; border: 1px solid var(--border); border-radius: 7px; padding: 6px 10px; font-size: 12px; color: var(--text); background: var(--bg); outline: none; }
-  .edit-row input:focus { border-color: var(--accent); }
-  .edit-row select { border: 1px solid var(--border); border-radius: 7px; padding: 6px 8px; font-size: 11px; color: var(--text); background: var(--bg); outline: none; }
-  .save-btn { background: var(--accent); color: #fff; border: none; border-radius: 7px; padding: 6px 12px; font-size: 12px; font-weight: 500; cursor: pointer; }
-  .cancel-btn { background: none; border: 1px solid var(--border); border-radius: 7px; padding: 6px 10px; font-size: 12px; cursor: pointer; color: var(--muted); }
+  .task-block-top { display: flex; align-items: flex-start; gap: 6px; }
+  .task-block-text { font-size: 12px; line-height: 1.3; flex: 1; min-width: 0; }
+  .task-block-time { font-size: 10px; color: inherit; opacity: .7; white-space: nowrap; flex-shrink: 0; }
+  .task-block-meta { display: flex; gap: 4px; margin-top: 3px; flex-wrap: wrap; align-items: center; }
+  .task-block .who-pill { font-size: 9px; font-weight: 600; padding: 1px 6px; border-radius: 20px; }
+  .task-block-actions { display: flex; gap: 2px; margin-left: auto; flex-shrink: 0; }
+  .task-block-actions button { background: none; border: none; cursor: pointer; padding: 1px 3px; opacity: .5; transition: opacity .15s; color: inherit; }
+  .task-block-actions button:hover { opacity: 1; }
+  .task-block-actions .del-btn { font-size: 14px; }
+  .task-block-actions .check-icon { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; display: flex; align-items: center; justify-content: center; }
+  .task-block-actions .check-icon.checked { background: currentColor; }
+  .task-block-actions .check-icon svg { width: 8px; height: 8px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; display: none; }
+  .task-block-actions .check-icon.checked svg { display: block; }
 
-  .empty { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; }
-  .loading { text-align: center; padding: 48px; color: var(--muted); font-size: 13px; }
+  /* Resize handle */
+  .resize-handle { position: absolute; bottom: 0; left: 0; right: 0; height: 8px; cursor: ns-resize; display: flex; align-items: center; justify-content: center; }
+  .resize-handle::after { content: ''; width: 24px; height: 3px; border-radius: 2px; background: currentColor; opacity: .25; }
+  .resize-handle:hover::after { opacity: .5; }
 
-  .todo-item[draggable="true"] { cursor: grab; }
-  .todo-item[draggable="true"]:active { cursor: grabbing; }
-  .todo-item.drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(45,106,79,.2); }
-  .todo-item.dragging { opacity: .4; }
-  .day-section.drag-over-day { background: rgba(45,106,79,.05); border-radius: var(--radius); }
+  /* Edit overlay */
+  .edit-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.4); z-index: 100; align-items: center; justify-content: center; }
+  .edit-overlay.open { display: flex; }
+  .edit-panel { background: var(--card); border-radius: var(--radius); padding: 20px; width: 90%; max-width: 400px; }
+  .edit-panel h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+  .edit-panel label { font-size: 11px; font-weight: 600; color: var(--muted); display: block; margin-bottom: 4px; margin-top: 10px; }
+  .edit-panel input, .edit-panel select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; color: var(--text); background: var(--bg); outline: none; }
+  .edit-panel input:focus, .edit-panel select:focus { border-color: var(--accent); }
+  .edit-panel .who-toggles { margin-top: 4px; }
+  .edit-panel .edit-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .edit-panel .edit-actions button { flex: 1; }
+
+  .day-section.drag-over-day { outline: 2px dashed var(--accent); outline-offset: 4px; border-radius: 8px; }
 
   .confetti-wrap { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; overflow: hidden; }
   .confetti-piece { position: absolute; border-radius: 2px; animation: cffall 1.3s ease-in forwards; }
   @keyframes cffall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(105vh) rotate(540deg);opacity:0} }
 
-  /* Mobile */
+  .empty { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; }
+  .loading { text-align: center; padding: 48px; color: var(--muted); font-size: 13px; }
+
   @media (max-width: 480px) {
     header { padding: 12px 14px; }
     header h1 { font-size: 15px; }
     .drag-bar { top: 62px; }
     .day-header { top: 98px; }
-    .container { padding: 14px 10px 80px; }
+    .container { padding: 12px 8px 80px; }
     .quick-form { padding: 10px; }
     .form-row { gap: 5px; }
     .form-row input { min-width: 100%; font-size: 16px; padding: 10px 11px; }
     .form-row select { font-size: 14px; padding: 10px 9px; flex: 1; }
     .btn { padding: 10px 14px; font-size: 13px; width: 100%; }
-    .todo-item { padding: 12px 10px; gap: 8px; }
-    .check-btn { width: 24px; height: 24px; }
-    .check-btn svg { width: 12px; height: 12px; }
-    .todo-text { font-size: 14px; }
-    .who-pill { font-size: 11px; padding: 2px 8px; }
-    .del-btn { font-size: 18px; padding: 4px 6px; }
-    .edit-btn svg { width: 15px; height: 15px; }
-    .edit-row input { min-width: 100%; font-size: 16px; }
-    .edit-row select { font-size: 14px; flex: 1; }
-    .save-btn, .cancel-btn { padding: 8px 14px; font-size: 13px; }
+    .timeline { margin-left: 32px; }
+    .hour-label { left: -32px; width: 28px; font-size: 9px; }
+    .task-block { left: 2px; right: 2px; padding: 5px 6px; }
+    .task-block-text { font-size: 11px; }
   }
 </style>
 </head>
@@ -157,12 +166,35 @@
     <div class="form-row">
       <input type="text" id="task-input" placeholder="Neue Aufgabe..." maxlength="120">
       <select id="day-select"><option>Montag</option><option>Dienstag</option><option>Mittwoch</option><option>Donnerstag</option><option>Freitag</option><option>Samstag</option><option>Sonntag</option></select>
+      <select id="hour-select"></select>
+      <select id="duration-select"></select>
       <div class="who-toggles" id="who-toggles"></div>
       <button class="btn btn-green" onclick="addTodo()">+ Hinzufügen</button>
     </div>
   </div>
 
   <div id="todo-list"><div class="loading">Verbinde...</div></div>
+</div>
+
+<!-- Edit modal -->
+<div class="edit-overlay" id="edit-overlay" onclick="if(event.target===this)closeEdit()">
+  <div class="edit-panel">
+    <h3>Aufgabe bearbeiten</h3>
+    <label>Aufgabe</label>
+    <input type="text" id="edit-text" maxlength="120">
+    <label>Tag</label>
+    <select id="edit-day"></select>
+    <div style="display:flex;gap:8px;">
+      <div style="flex:1"><label>Uhrzeit</label><select id="edit-hour" style="width:100%"></select></div>
+      <div style="flex:1"><label>Dauer</label><select id="edit-duration" style="width:100%"></select></div>
+    </div>
+    <label>Wer</label>
+    <div class="who-toggles" id="edit-who"></div>
+    <div class="edit-actions">
+      <button class="btn" style="background:var(--border);color:var(--text)" onclick="closeEdit()">Abbrechen</button>
+      <button class="btn btn-green" onclick="saveEdit()">Speichern</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
@@ -181,126 +213,182 @@ const WHO_COLORS = {
   Lili:    { bg: '#ede9fe', color: '#5b21b6' },
   Alle:    { bg: '#fce7f3', color: '#9d174d' }
 };
-
-const SEED = [
-  { day:'Montag',     who:'Jonas',   text:'Alle Materialien auspacken und sortieren (Farben, Vlies, Kleister, Heizkörper)',  done:true  },
-  { day:'Montag',     who:'Jonas',   text:'Alle Holzfenster mit 120er Schleifpapier anschleifen',                            done:false },
-  { day:'Montag',     who:'Lili',    text:'Kinder betreuen',                                                                  done:false },
-  { day:'Dienstag',   who:'Jonas',   text:'Erster Anstrich weißer Holzlack auf alle Fenster',                                done:false },
-  { day:'Dienstag',   who:'Jonas',   text:'Schlafzimmerboden mit Abdeckfolie schützen',                                      done:false },
-  { day:'Dienstag',   who:'Lili',    text:'Kinder betreuen',                                                                  done:false },
-  { day:'Mittwoch',   who:'Jonas',   text:'Zweiter Anstrich Holzlack auf Fenster (Fenster danach fertig)',                   done:false },
-  { day:'Mittwoch',   who:'Jonas',   text:'Schlafzimmerdecke streichen — 1 Anstrich Alpina Weiß',                           done:false },
-  { day:'Mittwoch',   who:'Lili',    text:'Kinder betreuen',                                                                  done:false },
-  { day:'Donnerstag', who:'Jonas',   text:'Schlafzimmerdecke kontrollieren — 2. Anstrich falls fleckig',                    done:false },
-  { day:'Donnerstag', who:'Jonas',   text:'Esszimmerdecke streichen — 1 Anstrich Alpina Weiß',                              done:false },
-  { day:'Donnerstag', who:'Jonas',   text:'Brombeere-Eimer prüfen — mindestens 4,4 L vorhanden?',                           done:false },
-  { day:'Donnerstag', who:'Lili',    text:'Kinder betreuen',                                                                  done:false },
-  { day:'Freitag',    who:'Ralf',    text:'Schornsteinfugen prüfen — schleifen + dünne Egalineschicht falls nötig',         done:false },
-  { day:'Freitag',    who:'Ralf',    text:'Bodendielen mit MS-Polymer-Kleber verkleben (Zahnspachtel, 24h beschweren)',      done:false },
-  { day:'Freitag',    who:'Jonas',   text:'Vlies an allen 4 Schlafzimmerwänden anbringen (mit Ralf ab 9 Uhr)',               done:false },
-  { day:'Freitag',    who:'Marlies', text:'Kommt 14:00 — restliche Vlieswände helfen fertigstellen',                        done:false },
-  { day:'Freitag',    who:'Lili',    text:'Kinder betreuen (ganzer Tag)',                                                     done:false },
-  { day:'Samstag',    who:'Alle',    text:'1. Anstrich Schlafzimmer — Sand (Wände 1–3) + Brombeere (Wand 4)',               done:false },
-  { day:'Samstag',    who:'Alle',    text:'2. Anstrich Schlafzimmer nach 2–3h — ggf. 3. Anstrich Brombeere',               done:false },
-  { day:'Samstag',    who:'Jonas',   text:'Vlies Esszimmer beginnen während Wände trocknen',                                 done:false },
-  { day:'Samstag',    who:'Ralf',    text:'Bodendielen kontrollieren — Tape entfernen, Haftung prüfen',                     done:false },
-  { day:'Samstag',    who:'Alle',    text:'Bett zurück ins Schlafzimmer bringen',                                            done:false },
-  { day:'Samstag',    who:'Lili',    text:'Kinder betreuen (ganzer Tag)',                                                     done:false },
-  { day:'Sonntag',    who:'Jonas',   text:'Esszimmer-Vlies fertigstellen (falls Samstag nicht abgeschlossen)',               done:false },
-  { day:'Sonntag',    who:'Jonas',   text:'Esszimmer streichen — 2× Sand + 2× Pistazie (verschiedene Wände gleichzeitig)', done:false },
-  { day:'Sonntag',    who:'Marlies', text:'Esszimmer streichen parallel (Pistazie-Wand)',                                    done:false },
-  { day:'Sonntag',    who:'Jonas',   text:'Büro-Akzentwand — Vlies anbringen + 2× Weiß streichen',                         done:false },
-  { day:'Sonntag',    who:'Marlies', text:'Büro-Akzentwand mithelfen',                                                       done:false },
-];
+const HOUR_START = 7;
+const HOUR_END = 21;
+const HOUR_H = 56;
 
 let todos = [];
+let editId = null;
+
+// Populate selects
+const hourSel = document.getElementById('hour-select');
+const durSel = document.getElementById('duration-select');
+for (let h = HOUR_START; h < HOUR_END; h++) {
+  hourSel.innerHTML += `<option value="${h}">${String(h).padStart(2,'0')}:00</option>`;
+}
+hourSel.value = '8';
+for (let d = 1; d <= 8; d++) {
+  durSel.innerHTML += `<option value="${d}">${d}h</option>`;
+}
+
+// Populate edit selects
+const editDaySel = document.getElementById('edit-day');
+DAYS.forEach(d => { editDaySel.innerHTML += `<option>${d}</option>`; });
+const editHourSel = document.getElementById('edit-hour');
+for (let h = HOUR_START; h < HOUR_END; h++) {
+  editHourSel.innerHTML += `<option value="${h}">${String(h).padStart(2,'0')}:00</option>`;
+}
+const editDurSel = document.getElementById('edit-duration');
+for (let d = 1; d <= 8; d++) {
+  editDurSel.innerHTML += `<option value="${d}">${d}h</option>`;
+}
+
+// Who toggles for add form
+document.getElementById('who-toggles').innerHTML = NAMES.map(n => {
+  const wc = WHO_COLORS[n];
+  return `<button type="button" class="who-toggle" style="color:${wc.color}" onclick="toggleAddWho('${n}')">${n}</button>`;
+}).join('');
+
+// Who toggles for edit form
+document.getElementById('edit-who').innerHTML = NAMES.map(n => {
+  const wc = WHO_COLORS[n];
+  return `<button type="button" class="who-toggle" data-name="${n}" style="color:${wc.color}" onclick="toggleEditWho('${n}')">${n}</button>`;
+}).join('');
 
 async function loadTodos() {
-  const { data, error } = await sb.from('reno_todos').select('*').order('created_at');
+  const { data, error } = await sb.from('reno_todos').select('*').order('start_hour').order('created_at');
   if (error) { document.getElementById('todo-list').innerHTML = '<div class="empty">Fehler: ' + esc(error.message) + '</div>'; return; }
-  if (!data.length) {
-    const rows = SEED.map((t, i) => ({ ...t, created_at: Date.now() + i }));
-    const { data: seeded } = await sb.from('reno_todos').insert(rows).select();
-    todos = seeded || [];
-  } else {
-    todos = data;
-  }
+  todos = data || [];
   renderList();
 }
 loadTodos();
 
-// Realtime sync
 sb.channel('reno_todos_changes')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'reno_todos' }, () => {
-    loadTodos();
-  })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'reno_todos' }, () => { loadTodos(); })
   .subscribe();
+
+function layoutColumns(items) {
+  // Assign columns to overlapping tasks
+  const sorted = [...items].sort((a, b) => (a.start_hour || 8) - (b.start_hour || 8));
+  const cols = []; // each col = list of tasks with their end times
+  const taskCols = new Map();
+  const taskMaxCols = new Map();
+
+  sorted.forEach(t => {
+    const start = t.start_hour ?? 8;
+    const end = start + (t.duration ?? 1);
+    let placed = false;
+    for (let c = 0; c < cols.length; c++) {
+      if (cols[c] <= start) {
+        cols[c] = end;
+        taskCols.set(t.id, c);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      taskCols.set(t.id, cols.length);
+      cols.push(end);
+    }
+  });
+
+  // Calculate max overlapping columns for each task
+  sorted.forEach(t => {
+    const start = t.start_hour ?? 8;
+    const end = start + (t.duration ?? 1);
+    let maxC = 1;
+    sorted.forEach(u => {
+      const us = u.start_hour ?? 8;
+      const ue = us + (u.duration ?? 1);
+      if (us < end && ue > start) {
+        maxC = Math.max(maxC, (taskCols.get(u.id) || 0) + 1);
+      }
+    });
+    taskMaxCols.set(t.id, maxC);
+  });
+
+  return { taskCols, taskMaxCols };
+}
 
 function renderList() {
   const done = todos.filter(t => t.done).length;
-  const pct = todos.length ? Math.round(done/todos.length*100) : 0;
+  const pct = todos.length ? Math.round(done / todos.length * 100) : 0;
   document.getElementById('progress-text').textContent = `${done} von ${todos.length} erledigt (${pct}%)`;
   document.getElementById('overall-fill').style.width = pct + '%';
 
   const list = document.getElementById('todo-list');
   let html = '';
+  const totalHours = HOUR_END - HOUR_START;
 
   DAYS.forEach(day => {
     const items = todos.filter(t => t.day === day);
     const dayDone = items.filter(t => t.done).length;
-    const dayPct = items.length ? Math.round(dayDone/items.length*100) : 0;
+    const dayPct = items.length ? Math.round(dayDone / items.length * 100) : 0;
+    const { taskCols, taskMaxCols } = layoutColumns(items);
 
     html += `<div class="day-section" data-day="${day}">
       <div class="day-header">
         <span class="day-title">${day}</span>
-        <span class="day-progress">${dayDone} von ${items.length}</span>
+        <span class="day-progress">${dayDone}/${items.length}</span>
       </div>
-      <div class="day-bar"><div class="day-bar-fill" style="width:${dayPct}%"></div></div>`;
+      <div class="day-bar"><div class="day-bar-fill" style="width:${dayPct}%"></div></div>
+      <div class="timeline" style="height:${totalHours * HOUR_H}px" data-day="${day}">`;
 
-    if (!items.length) {
-      html += '<div class="day-empty">Keine Aufgaben</div>';
-    } else {
-      items.forEach(t => {
-        const people = t.who.split(',').map(s => s.trim()).filter(Boolean);
-        const pills = people.map(p => {
-          const wc = WHO_COLORS[p] || { bg:'#eee', color:'#555' };
-          return `<span class="who-pill" style="background:${wc.bg};color:${wc.color}">${p}</span>`;
-        }).join('');
-        const editToggles = NAMES.map(n => {
-          const on = people.includes(n) ? ' on' : '';
-          const wc = WHO_COLORS[n];
-          const style = on ? `background:${wc.bg};color:${wc.color};border-color:${wc.color}` : `color:${wc.color}`;
-          return `<button type="button" class="who-toggle${on}" style="${style}" onclick="toggleEditWho('${t.id}','${n}')">${n}</button>`;
-        }).join('');
-        html += `<div class="todo-item${t.done?' done':''}" id="item-${t.id}" draggable="true" data-id="${t.id}" data-day="${day}">
-          <button class="check-btn${t.done?' checked':''}" onclick="toggle('${t.id}',${t.done})">
-            <svg viewBox="0 0 10 10"><polyline points="1,5.5 3.8,8.5 9,1.5"/></svg>
-          </button>
-          <div class="todo-body">
-            <div class="todo-text">${esc(t.text)}</div>
-            <div class="todo-meta">${pills}</div>
-            <div class="edit-row" id="edit-${t.id}">
-              <input type="text" id="edit-text-${t.id}" value="${esc(t.text)}" maxlength="120">
-              <div class="who-toggles" id="edit-who-${t.id}">${editToggles}</div>
-              <button class="save-btn" onclick="saveEdit('${t.id}')">Speichern</button>
-              <button class="cancel-btn" onclick="closeEdit('${t.id}')">Abbrechen</button>
-            </div>
-          </div>
-          <button class="edit-btn" onclick="openEdit('${t.id}')" title="Bearbeiten">
-            <svg viewBox="0 0 14 14"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/><path d="M8 4l2 2"/></svg>
-          </button>
-          <button class="del-btn" onclick="delTodo('${t.id}')">&times;</button>
-        </div>`;
-      });
+    for (let h = HOUR_START; h < HOUR_END; h++) {
+      html += `<div class="hour-row" data-hour="${h}"><span class="hour-label">${String(h).padStart(2, '0')}:00</span></div>`;
     }
-    html += '</div>';
+
+    items.forEach(t => {
+      const start = t.start_hour ?? 8;
+      const dur = t.duration ?? 1;
+      const top = (start - HOUR_START) * HOUR_H;
+      const height = dur * HOUR_H - 2;
+      const people = t.who.split(',').map(s => s.trim()).filter(Boolean);
+      const firstPerson = people[0] || 'Jonas';
+      const wc = WHO_COLORS[firstPerson] || WHO_COLORS.Jonas;
+
+      const col = taskCols.get(t.id) || 0;
+      const maxCol = taskMaxCols.get(t.id) || 1;
+      const widthPct = 100 / maxCol;
+      const leftPct = col * widthPct;
+
+      const pills = people.map(p => {
+        const c = WHO_COLORS[p] || { bg: '#eee', color: '#555' };
+        return `<span class="who-pill" style="background:${c.bg};color:${c.color}">${p}</span>`;
+      }).join('');
+
+      const endHour = Math.min(start + dur, HOUR_END);
+      const timeLabel = `${String(start).padStart(2, '0')}–${String(endHour).padStart(2, '0')}`;
+
+      html += `<div class="task-block${t.done ? ' done' : ''}" id="item-${t.id}" data-id="${t.id}"
+        style="top:${top}px;height:${height}px;background:${wc.bg};color:${wc.color};border-color:${wc.color}40;left:calc(4px + ${leftPct}%*(1 - 8px/100%));width:calc(${widthPct}% - 8px);"
+        draggable="true">
+        <div class="task-block-top">
+          <div class="task-block-text">${esc(t.text)}</div>
+          <span class="task-block-time">${timeLabel}</span>
+        </div>
+        <div class="task-block-meta">
+          ${pills}
+          <span class="task-block-actions">
+            <button onclick="event.stopPropagation();toggle('${t.id}',${t.done})" title="${t.done ? 'Rückgängig' : 'Erledigt'}">
+              <div class="check-icon${t.done ? ' checked' : ''}"><svg viewBox="0 0 10 10"><polyline points="1,5.5 3.8,8.5 9,1.5"/></svg></div>
+            </button>
+            <button onclick="event.stopPropagation();openEdit('${t.id}')" title="Bearbeiten">✎</button>
+            <button class="del-btn" onclick="event.stopPropagation();delTodo('${t.id}')" title="Löschen">&times;</button>
+          </span>
+        </div>
+        <div class="resize-handle" data-id="${t.id}"></div>
+      </div>`;
+    });
+
+    html += '</div></div>';
   });
 
   list.innerHTML = html;
-  setupDragDrop();
+  setupInteractions();
 }
 
+// --- CRUD ---
 window.toggle = async function(id, wasDone) {
   if (!wasDone) {
     const el = document.getElementById('item-' + id);
@@ -310,20 +398,43 @@ window.toggle = async function(id, wasDone) {
   await sb.from('reno_todos').update({ done: !wasDone }).eq('id', id);
   await loadTodos();
 };
+
 window.delTodo = async function(id) {
   if (!confirm('Aufgabe löschen?')) return;
   await sb.from('reno_todos').delete().eq('id', id);
   await loadTodos();
 };
+
 window.openEdit = function(id) {
-  document.getElementById('edit-'+id).classList.add('open');
+  editId = id;
+  const t = todos.find(x => x.id == id);
+  if (!t) return;
+  document.getElementById('edit-text').value = t.text;
+  document.getElementById('edit-day').value = t.day;
+  document.getElementById('edit-hour').value = t.start_hour ?? 8;
+  document.getElementById('edit-duration').value = t.duration ?? 1;
+  const people = t.who.split(',').map(s => s.trim()).filter(Boolean);
+  document.querySelectorAll('#edit-who .who-toggle').forEach(btn => {
+    const name = btn.dataset.name;
+    const wc = WHO_COLORS[name];
+    if (people.includes(name)) {
+      btn.classList.add('on');
+      btn.style.background = wc.bg; btn.style.borderColor = wc.color;
+    } else {
+      btn.classList.remove('on');
+      btn.style.background = 'none'; btn.style.borderColor = '';
+    }
+  });
+  document.getElementById('edit-overlay').classList.add('open');
 };
-window.closeEdit = function(id) {
-  document.getElementById('edit-'+id).classList.remove('open');
+
+window.closeEdit = function() {
+  editId = null;
+  document.getElementById('edit-overlay').classList.remove('open');
 };
-window.toggleEditWho = function(id, name) {
-  const container = document.getElementById('edit-who-'+id);
-  const btn = [...container.children].find(b => b.textContent === name);
+
+window.toggleEditWho = function(name) {
+  const btn = document.querySelector(`#edit-who .who-toggle[data-name="${name}"]`);
   if (!btn) return;
   btn.classList.toggle('on');
   const wc = WHO_COLORS[name];
@@ -333,13 +444,20 @@ window.toggleEditWho = function(id, name) {
     btn.style.background = 'none'; btn.style.borderColor = '';
   }
 };
-window.saveEdit = async function(id) {
-  const text = document.getElementById('edit-text-'+id).value.trim();
-  const selected = [...document.getElementById('edit-who-'+id).children].filter(b => b.classList.contains('on')).map(b => b.textContent);
+
+window.saveEdit = async function() {
+  if (!editId) return;
+  const text = document.getElementById('edit-text').value.trim();
+  const day = document.getElementById('edit-day').value;
+  const start_hour = parseInt(document.getElementById('edit-hour').value);
+  const duration = parseInt(document.getElementById('edit-duration').value);
+  const selected = [...document.querySelectorAll('#edit-who .who-toggle.on')].map(b => b.dataset.name);
   if (!text || !selected.length) return;
-  await sb.from('reno_todos').update({ text, who: selected.join(',') }).eq('id', id);
+  await sb.from('reno_todos').update({ text, day, start_hour, duration, who: selected.join(',') }).eq('id', editId);
+  closeEdit();
   await loadTodos();
 };
+
 window.toggleAddWho = function(name) {
   const container = document.getElementById('who-toggles');
   const btn = [...container.children].find(b => b.textContent === name);
@@ -352,30 +470,209 @@ window.toggleAddWho = function(name) {
     btn.style.background = 'none'; btn.style.borderColor = '';
   }
 };
+
 window.addTodo = async function() {
   const text = document.getElementById('task-input').value.trim();
   const selected = [...document.getElementById('who-toggles').children].filter(b => b.classList.contains('on')).map(b => b.textContent);
   if (!text || !selected.length) return;
-  await sb.from('reno_todos').insert({ text, day: document.getElementById('day-select').value, who: selected.join(','), done: false, created_at: Date.now() });
+  const start_hour = parseInt(document.getElementById('hour-select').value);
+  const duration = parseInt(document.getElementById('duration-select').value);
+  await sb.from('reno_todos').insert({ text, day: document.getElementById('day-select').value, who: selected.join(','), done: false, start_hour, duration, created_at: Date.now() });
   document.getElementById('task-input').value = '';
   [...document.getElementById('who-toggles').children].forEach(b => { b.classList.remove('on'); b.style.background = 'none'; b.style.borderColor = ''; });
   await loadTodos();
 };
+
 window.addKinder = async function() {
-  await sb.from('reno_todos').insert({ text: 'Kinder betreuen', day: document.getElementById('kinder-day').value, who: document.getElementById('kinder-who').value, done: false, created_at: Date.now() });
+  await sb.from('reno_todos').insert({ text: 'Kinder betreuen', day: document.getElementById('kinder-day').value, who: document.getElementById('kinder-who').value, done: false, start_hour: 8, duration: 10, created_at: Date.now() });
   await loadTodos();
 };
-document.getElementById('task-input').addEventListener('keydown', e => { if(e.key==='Enter') window.addTodo(); });
 
-// Render add-form who toggles
-document.getElementById('who-toggles').innerHTML = NAMES.map(n => {
-  const wc = WHO_COLORS[n];
-  return `<button type="button" class="who-toggle" style="color:${wc.color}" onclick="toggleAddWho('${n}')">${n}</button>`;
-}).join('');
+document.getElementById('task-input').addEventListener('keydown', e => { if (e.key === 'Enter') window.addTodo(); });
 
-// --- Drag & Drop: Names onto tasks + Tasks between day sections ---
-function setupDragDrop() {
-  // Name pills → tasks (drag from bar)
+// --- Interactions: resize, drag-move, name drops ---
+function setupInteractions() {
+  setupResize();
+  setupTaskDrag();
+  setupNameDrag();
+}
+
+function setupResize() {
+  document.querySelectorAll('.resize-handle').forEach(handle => {
+    let startY, startDur, taskId, timeline;
+
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      taskId = handle.dataset.id;
+      const block = handle.parentElement;
+      timeline = block.parentElement;
+      startY = e.clientY;
+      startDur = todos.find(t => t.id == taskId)?.duration ?? 1;
+
+      const onMove = e2 => {
+        const dy = e2.clientY - startY;
+        const dHours = Math.round(dy / HOUR_H);
+        const newDur = Math.max(1, Math.min(HOUR_END - (todos.find(t => t.id == taskId)?.start_hour ?? 8), startDur + dHours));
+        block.style.height = (newDur * HOUR_H - 2) + 'px';
+        // Update time label
+        const t = todos.find(t => t.id == taskId);
+        const s = t?.start_hour ?? 8;
+        const timeEl = block.querySelector('.task-block-time');
+        if (timeEl) timeEl.textContent = `${String(s).padStart(2, '0')}–${String(Math.min(s + newDur, HOUR_END)).padStart(2, '0')}`;
+        block._pendingDur = newDur;
+      };
+      const onUp = async () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        if (block._pendingDur && block._pendingDur !== startDur) {
+          await sb.from('reno_todos').update({ duration: block._pendingDur }).eq('id', taskId);
+          await loadTodos();
+        }
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    // Touch resize
+    handle.addEventListener('touchstart', e => {
+      e.stopPropagation();
+      taskId = handle.dataset.id;
+      const block = handle.parentElement;
+      startY = e.touches[0].clientY;
+      startDur = todos.find(t => t.id == taskId)?.duration ?? 1;
+
+      const onMove = e2 => {
+        e2.preventDefault();
+        const dy = e2.touches[0].clientY - startY;
+        const dHours = Math.round(dy / HOUR_H);
+        const newDur = Math.max(1, Math.min(HOUR_END - (todos.find(t => t.id == taskId)?.start_hour ?? 8), startDur + dHours));
+        block.style.height = (newDur * HOUR_H - 2) + 'px';
+        const t = todos.find(t => t.id == taskId);
+        const s = t?.start_hour ?? 8;
+        const timeEl = block.querySelector('.task-block-time');
+        if (timeEl) timeEl.textContent = `${String(s).padStart(2, '0')}–${String(Math.min(s + newDur, HOUR_END)).padStart(2, '0')}`;
+        block._pendingDur = newDur;
+      };
+      const onEnd = async () => {
+        handle.removeEventListener('touchmove', onMove);
+        handle.removeEventListener('touchend', onEnd);
+        if (block._pendingDur && block._pendingDur !== startDur) {
+          await sb.from('reno_todos').update({ duration: block._pendingDur }).eq('id', taskId);
+          await loadTodos();
+        }
+      };
+      handle.addEventListener('touchmove', onMove, { passive: false });
+      handle.addEventListener('touchend', onEnd);
+    }, { passive: true });
+  });
+}
+
+function setupTaskDrag() {
+  document.querySelectorAll('.task-block[draggable="true"]').forEach(block => {
+    block.addEventListener('dragstart', e => {
+      if (e.target.closest('.resize-handle')) { e.preventDefault(); return; }
+      e.dataTransfer.setData('text/drag-task', block.dataset.id);
+      e.dataTransfer.effectAllowed = 'move';
+      block.classList.add('dragging');
+    });
+    block.addEventListener('dragend', () => block.classList.remove('dragging'));
+  });
+
+  // Timelines accept task drops
+  document.querySelectorAll('.timeline').forEach(tl => {
+    tl.addEventListener('dragover', e => {
+      if (!e.dataTransfer.types.includes('text/drag-task')) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      // Highlight hour row
+      tl.querySelectorAll('.hour-row.drop-highlight').forEach(r => r.classList.remove('drop-highlight'));
+      const rect = tl.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const hour = Math.floor(y / HOUR_H) + HOUR_START;
+      const row = tl.querySelector(`.hour-row[data-hour="${hour}"]`);
+      if (row) row.classList.add('drop-highlight');
+    });
+    tl.addEventListener('dragleave', e => {
+      if (!tl.contains(e.relatedTarget)) {
+        tl.querySelectorAll('.hour-row.drop-highlight').forEach(r => r.classList.remove('drop-highlight'));
+      }
+    });
+    tl.addEventListener('drop', async e => {
+      tl.querySelectorAll('.hour-row.drop-highlight').forEach(r => r.classList.remove('drop-highlight'));
+      const taskId = e.dataTransfer.getData('text/drag-task');
+      if (!taskId) return;
+      e.preventDefault();
+      const rect = tl.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const hour = Math.max(HOUR_START, Math.min(HOUR_END - 1, Math.floor(y / HOUR_H) + HOUR_START));
+      const targetDay = tl.dataset.day;
+      const todo = todos.find(t => t.id == taskId);
+      if (!todo) return;
+      const dur = todo.duration ?? 1;
+      const clampedHour = Math.min(hour, HOUR_END - dur);
+      const updates = { start_hour: clampedHour };
+      if (todo.day !== targetDay) updates.day = targetDay;
+      if (clampedHour === (todo.start_hour ?? 8) && !updates.day) return;
+      await sb.from('reno_todos').update(updates).eq('id', taskId);
+      await loadTodos();
+    });
+  });
+
+  // Touch drag for tasks
+  document.querySelectorAll('.task-block[draggable="true"]').forEach(block => {
+    let clone = null, dragging = false, startY = 0, startX = 0;
+    block.addEventListener('touchstart', e => {
+      if (e.target.closest('.resize-handle')) return;
+      startY = e.touches[0].clientY;
+      startX = e.touches[0].clientX;
+      dragging = false;
+    }, { passive: true });
+    block.addEventListener('touchmove', e => {
+      if (e.target.closest('.resize-handle')) return;
+      const t = e.touches[0];
+      if (!dragging && (Math.abs(t.clientY - startY) > 12 || Math.abs(t.clientX - startX) > 12)) {
+        dragging = true;
+        clone = document.createElement('div');
+        clone.textContent = block.querySelector('.task-block-text').textContent.substring(0, 25) + '…';
+        clone.style.cssText = 'position:fixed;z-index:999;pointer-events:none;background:var(--card);border:1px solid var(--accent);border-radius:8px;padding:6px 12px;font-size:12px;opacity:.9;max-width:180px;';
+        document.body.appendChild(clone);
+        block.classList.add('dragging');
+      }
+      if (!dragging) return;
+      e.preventDefault();
+      clone.style.left = (t.clientX - 30) + 'px';
+      clone.style.top = (t.clientY - 20) + 'px';
+    }, { passive: false });
+    block.addEventListener('touchend', async e => {
+      if (!dragging) return;
+      block.classList.remove('dragging');
+      if (clone) { clone.remove(); clone = null; }
+      const t = e.changedTouches[0];
+      const target = document.elementFromPoint(t.clientX, t.clientY);
+      const tl = target?.closest?.('.timeline');
+      if (tl) {
+        const rect = tl.getBoundingClientRect();
+        const y = t.clientY - rect.top;
+        const hour = Math.max(HOUR_START, Math.min(HOUR_END - 1, Math.floor(y / HOUR_H) + HOUR_START));
+        const targetDay = tl.dataset.day;
+        const todo = todos.find(td => td.id == block.dataset.id);
+        if (todo) {
+          const dur = todo.duration ?? 1;
+          const clampedHour = Math.min(hour, HOUR_END - dur);
+          const updates = { start_hour: clampedHour };
+          if (todo.day !== targetDay) updates.day = targetDay;
+          await sb.from('reno_todos').update(updates).eq('id', block.dataset.id);
+          await loadTodos();
+        }
+      }
+      dragging = false;
+    });
+  });
+}
+
+function setupNameDrag() {
+  // Desktop: drag name pills
   document.querySelectorAll('.drag-name').forEach(pill => {
     pill.ondragstart = e => {
       e.dataTransfer.setData('text/drag-name', pill.dataset.name);
@@ -383,78 +680,34 @@ function setupDragDrop() {
     };
   });
 
-  // Task items: draggable + drop targets for names
-  document.querySelectorAll('.todo-item[draggable="true"]').forEach(item => {
-    item.addEventListener('dragstart', e => {
-      if (e.dataTransfer.types.includes('text/drag-name')) return;
-      e.dataTransfer.setData('text/drag-task', item.dataset.id);
-      e.dataTransfer.effectAllowed = 'move';
-      item.classList.add('dragging');
-    });
-    item.addEventListener('dragend', () => item.classList.remove('dragging'));
-
-    // Accept name drops
-    item.addEventListener('dragover', e => {
+  // Task blocks accept name drops
+  document.querySelectorAll('.task-block').forEach(block => {
+    block.addEventListener('dragover', e => {
       if (e.dataTransfer.types.includes('text/drag-name')) {
         e.preventDefault();
+        e.stopPropagation();
         e.dataTransfer.dropEffect = 'copy';
-        item.classList.add('drag-over');
+        block.style.boxShadow = '0 0 0 2px var(--accent)';
       }
     });
-    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
-    item.addEventListener('drop', async e => {
-      item.classList.remove('drag-over');
+    block.addEventListener('dragleave', () => { block.style.boxShadow = ''; });
+    block.addEventListener('drop', async e => {
+      block.style.boxShadow = '';
       const name = e.dataTransfer.getData('text/drag-name');
-      if (name) {
-        e.preventDefault();
-        assignNameToTask(item.dataset.id, name);
-      }
+      if (!name) return;
+      e.preventDefault();
+      e.stopPropagation();
+      await assignNameToTask(block.dataset.id, name);
     });
   });
 
-  // Day sections: accept task drops to move tasks between days
-  document.querySelectorAll('.day-section').forEach(section => {
-    section.addEventListener('dragover', e => {
-      const hasTask = e.dataTransfer.types.includes('text/drag-task');
-      if (!hasTask) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      // Clear others, highlight this section
-      document.querySelectorAll('.day-section.drag-over-day').forEach(s => s.classList.remove('drag-over-day'));
-      section.classList.add('drag-over-day');
-    });
-    section.addEventListener('dragleave', e => {
-      // Only remove if leaving the section entirely
-      if (!section.contains(e.relatedTarget)) {
-        section.classList.remove('drag-over-day');
-      }
-    });
-    section.addEventListener('drop', async e => {
-      section.classList.remove('drag-over-day');
-      const taskId = e.dataTransfer.getData('text/drag-task');
-      if (!taskId) return;
-      e.preventDefault();
-      const targetDay = section.dataset.day;
-      const todo = todos.find(t => t.id == taskId);
-      if (!todo || todo.day === targetDay) return;
-      await sb.from('reno_todos').update({ day: targetDay }).eq('id', taskId);
-      await loadTodos();
-    });
-  });
-
-  // Touch: drag names onto tasks
-  setupNameTouchDrag();
-  // Touch: drag tasks between day sections
-  setupTaskTouchDrag();
-}
-
-function setupNameTouchDrag() {
+  // Touch: drag names onto task blocks
   document.querySelectorAll('.drag-name').forEach(pill => {
     let clone = null;
     pill.addEventListener('touchstart', e => {
       const t = e.touches[0];
       clone = pill.cloneNode(true);
-      clone.style.cssText = `position:fixed;z-index:999;pointer-events:none;opacity:.85;left:${t.clientX-20}px;top:${t.clientY-20}px;`;
+      clone.style.cssText = `position:fixed;z-index:999;pointer-events:none;opacity:.85;left:${t.clientX - 20}px;top:${t.clientY - 20}px;`;
       document.body.appendChild(clone);
       pill._dragName = pill.dataset.name;
     }, { passive: true });
@@ -464,63 +717,18 @@ function setupNameTouchDrag() {
       const t = e.touches[0];
       clone.style.left = (t.clientX - 20) + 'px';
       clone.style.top = (t.clientY - 20) + 'px';
-      document.querySelectorAll('.todo-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+      document.querySelectorAll('.task-block').forEach(b => b.style.boxShadow = '');
       const target = document.elementFromPoint(t.clientX, t.clientY);
-      const item = target?.closest?.('.todo-item');
-      if (item) item.classList.add('drag-over');
+      const b = target?.closest?.('.task-block');
+      if (b) b.style.boxShadow = '0 0 0 2px var(--accent)';
     }, { passive: false });
     pill.addEventListener('touchend', e => {
       if (clone) { clone.remove(); clone = null; }
       const t = e.changedTouches[0];
+      document.querySelectorAll('.task-block').forEach(b => b.style.boxShadow = '');
       const target = document.elementFromPoint(t.clientX, t.clientY);
-      const item = target?.closest?.('.todo-item');
-      document.querySelectorAll('.todo-item.drag-over').forEach(el => el.classList.remove('drag-over'));
-      if (item) assignNameToTask(item.dataset.id, pill._dragName);
-    });
-  });
-}
-
-function setupTaskTouchDrag() {
-  document.querySelectorAll('.todo-item[draggable="true"]').forEach(item => {
-    let clone = null, dragging = false, startY = 0;
-    item.addEventListener('touchstart', e => {
-      startY = e.touches[0].clientY;
-      dragging = false;
-    }, { passive: true });
-    item.addEventListener('touchmove', e => {
-      const t = e.touches[0];
-      if (!dragging && Math.abs(t.clientY - startY) > 10) {
-        dragging = true;
-        clone = document.createElement('div');
-        clone.textContent = item.querySelector('.todo-text').textContent.substring(0, 30) + '…';
-        clone.style.cssText = 'position:fixed;z-index:999;pointer-events:none;background:var(--card);border:1px solid var(--accent);border-radius:8px;padding:6px 12px;font-size:12px;opacity:.9;max-width:200px;';
-        document.body.appendChild(clone);
-      }
-      if (!dragging) return;
-      e.preventDefault();
-      clone.style.left = (t.clientX - 30) + 'px';
-      clone.style.top = (t.clientY - 20) + 'px';
-      document.querySelectorAll('.day-section.drag-over-day').forEach(s => s.classList.remove('drag-over-day'));
-      const target = document.elementFromPoint(t.clientX, t.clientY);
-      const section = target?.closest?.('.day-section');
-      if (section) section.classList.add('drag-over-day');
-    }, { passive: false });
-    item.addEventListener('touchend', async e => {
-      if (!dragging) return;
-      if (clone) { clone.remove(); clone = null; }
-      const t = e.changedTouches[0];
-      document.querySelectorAll('.day-section.drag-over-day').forEach(s => s.classList.remove('drag-over-day'));
-      const target = document.elementFromPoint(t.clientX, t.clientY);
-      const section = target?.closest?.('.day-section');
-      if (section) {
-        const targetDay = section.dataset.day;
-        const todo = todos.find(td => td.id == item.dataset.id);
-        if (todo && todo.day !== targetDay) {
-          await sb.from('reno_todos').update({ day: targetDay }).eq('id', item.dataset.id);
-          await loadTodos();
-        }
-      }
-      dragging = false;
+      const b = target?.closest?.('.task-block');
+      if (b) assignNameToTask(b.dataset.id, pill._dragName);
     });
   });
 }
@@ -535,15 +743,15 @@ async function assignNameToTask(id, name) {
   await loadTodos();
 }
 
-function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 function confetti() {
   const wrap = document.getElementById('confetti');
-  const colors = ['#2d6a4f','#52b788','#d8f3dc','#f4a261','#e76f51','#7c3aed'];
-  for (let i=0; i<30; i++) {
+  const colors = ['#2d6a4f', '#52b788', '#d8f3dc', '#f4a261', '#e76f51', '#7c3aed'];
+  for (let i = 0; i < 30; i++) {
     const el = document.createElement('div');
     el.className = 'confetti-piece';
-    const s = 6+Math.random()*7;
-    el.style.cssText = `left:${Math.random()*100}%;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};width:${s}px;height:${s}px;animation-delay:${Math.random()*.4}s;animation-duration:${.9+Math.random()*.7}s;`;
+    const s = 6 + Math.random() * 7;
+    el.style.cssText = `left:${Math.random() * 100}%;top:-10px;background:${colors[Math.floor(Math.random() * colors.length)]};width:${s}px;height:${s}px;animation-delay:${Math.random() * .4}s;animation-duration:${.9 + Math.random() * .7}s;`;
     wrap.appendChild(el);
     setTimeout(() => el.remove(), 2000);
   }
