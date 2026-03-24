@@ -27,12 +27,10 @@
   .overall-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
   .overall-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .5s; }
 
-  .day-tabs { display: flex; gap: 4px; overflow-x: auto; padding: 10px 16px 0; background: var(--card); border-bottom: 1px solid var(--border); scrollbar-width: none; }
-  .day-tabs::-webkit-scrollbar { display: none; }
-  .day-tab { padding: 6px 12px; border-radius: 8px 8px 0 0; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid transparent; border-bottom: none; white-space: nowrap; color: var(--muted); background: none; transition: all .15s; flex-shrink: 0; }
-  .day-tab:hover { color: var(--text); }
-  .day-tab.active { color: var(--accent); background: var(--bg); border-color: var(--border); }
-  .tab-count { font-size: 10px; margin-left: 4px; opacity: .7; }
+  .drag-bar { display: flex; gap: 6px; padding: 8px 16px; background: var(--card); border-bottom: 1px solid var(--border); align-items: center; position: sticky; top: 76px; z-index: 9; }
+  .drag-bar-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-right: 4px; }
+  .drag-name { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none; }
+  .drag-name:active { cursor: grabbing; }
 
   .container { max-width: 680px; margin: 0 auto; padding: 20px 16px 80px; }
 
@@ -50,12 +48,13 @@
   .btn-green { background: var(--accent); color: #fff; }
   .btn-purple { background: #7c3aed; color: #fff; }
 
-  .day-section { margin-bottom: 8px; }
-  .day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-  .day-title { font-size: 14px; font-weight: 600; }
+  .day-section { margin-bottom: 20px; }
+  .day-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; position: sticky; top: 112px; background: var(--bg); padding: 8px 0 4px; z-index: 5; }
+  .day-title { font-size: 15px; font-weight: 700; }
   .day-progress { font-size: 11px; color: var(--muted); }
   .day-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
   .day-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .4s; }
+  .day-empty { text-align: center; padding: 16px; color: var(--muted); font-size: 12px; font-style: italic; }
 
   .todo-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 11px 12px; margin-bottom: 5px; display: flex; align-items: flex-start; gap: 10px; }
   .todo-item.done { opacity: .5; }
@@ -89,6 +88,12 @@
   .empty { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; }
   .loading { text-align: center; padding: 48px; color: var(--muted); font-size: 13px; }
 
+  .todo-item[draggable="true"] { cursor: grab; }
+  .todo-item[draggable="true"]:active { cursor: grabbing; }
+  .todo-item.drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(45,106,79,.2); }
+  .todo-item.dragging { opacity: .4; }
+  .day-section.drag-over-day { background: rgba(45,106,79,.05); border-radius: var(--radius); }
+
   .confetti-wrap { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; overflow: hidden; }
   .confetti-piece { position: absolute; border-radius: 2px; animation: cffall 1.3s ease-in forwards; }
   @keyframes cffall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(105vh) rotate(540deg);opacity:0} }
@@ -97,14 +102,14 @@
   @media (max-width: 480px) {
     header { padding: 12px 14px; }
     header h1 { font-size: 15px; }
+    .drag-bar { top: 62px; }
+    .day-header { top: 98px; }
     .container { padding: 14px 10px 80px; }
     .quick-form { padding: 10px; }
     .form-row { gap: 5px; }
     .form-row input { min-width: 100%; font-size: 16px; padding: 10px 11px; }
     .form-row select { font-size: 14px; padding: 10px 9px; flex: 1; }
     .btn { padding: 10px 14px; font-size: 13px; width: 100%; }
-    .day-tabs { padding: 8px 10px 0; gap: 2px; }
-    .day-tab { padding: 8px 10px; font-size: 13px; }
     .todo-item { padding: 12px 10px; gap: 8px; }
     .check-btn { width: 24px; height: 24px; }
     .check-btn svg { width: 12px; height: 12px; }
@@ -129,7 +134,13 @@
   <div class="overall-bar"><div class="overall-fill" id="overall-fill" style="width:0%"></div></div>
 </header>
 
-<div class="day-tabs" id="day-tabs"></div>
+<div class="drag-bar">
+  <span class="drag-bar-label">Ziehen:</span>
+  <span class="drag-name" draggable="true" data-name="Jonas" style="background:#dbeafe;color:#1d4ed8">Jonas</span>
+  <span class="drag-name" draggable="true" data-name="Ralf" style="background:#dcfce7;color:#166534">Ralf</span>
+  <span class="drag-name" draggable="true" data-name="Marlies" style="background:#fef9c3;color:#854d0e">Marlies</span>
+  <span class="drag-name" draggable="true" data-name="Lili" style="background:#ede9fe;color:#5b21b6">Lili</span>
+</div>
 
 <div class="container">
   <div class="quick-form">
@@ -204,7 +215,6 @@ const SEED = [
 ];
 
 let todos = [];
-let activeDay = 'Montag';
 
 async function loadTodos() {
   const { data, error } = await sb.from('reno_todos').select('*').order('created_at');
@@ -216,7 +226,6 @@ async function loadTodos() {
   } else {
     todos = data;
   }
-  renderTabs();
   renderList();
 }
 loadTodos();
@@ -228,68 +237,68 @@ sb.channel('reno_todos_changes')
   })
   .subscribe();
 
-function renderTabs() {
-  document.getElementById('day-tabs').innerHTML = DAYS.map(day => {
-    const items = todos.filter(t => t.day === day);
-    const done = items.filter(t => t.done).length;
-    const active = day === activeDay ? ' active' : '';
-    return `<button class="day-tab${active}" onclick="setDay('${day}')">${day.substring(0,2)}<span class="tab-count">${done}/${items.length}</span></button>`;
-  }).join('');
-}
-
-window.setDay = function(day) { activeDay = day; renderTabs(); renderList(); };
-
 function renderList() {
   const done = todos.filter(t => t.done).length;
   const pct = todos.length ? Math.round(done/todos.length*100) : 0;
   document.getElementById('progress-text').textContent = `${done} von ${todos.length} erledigt (${pct}%)`;
   document.getElementById('overall-fill').style.width = pct + '%';
 
-  const items = todos.filter(t => t.day === activeDay);
   const list = document.getElementById('todo-list');
-  if (!items.length) { list.innerHTML = '<div class="empty">Keine Aufgaben für diesen Tag.</div>'; return; }
+  let html = '';
 
-  const dayDone = items.filter(t => t.done).length;
-  const dayPct = Math.round(dayDone/items.length*100);
+  DAYS.forEach(day => {
+    const items = todos.filter(t => t.day === day);
+    const dayDone = items.filter(t => t.done).length;
+    const dayPct = items.length ? Math.round(dayDone/items.length*100) : 0;
 
-  let html = `<div class="day-section">
-    <div class="day-header"><span class="day-title">${activeDay}</span><span class="day-progress">${dayDone} von ${items.length} erledigt</span></div>
-    <div class="day-bar"><div class="day-bar-fill" style="width:${dayPct}%"></div></div>`;
-
-  items.forEach(t => {
-    const people = t.who.split(',').map(s => s.trim()).filter(Boolean);
-    const pills = people.map(p => {
-      const wc = WHO_COLORS[p] || { bg:'#eee', color:'#555' };
-      return `<span class="who-pill" style="background:${wc.bg};color:${wc.color}">${p}</span>`;
-    }).join('');
-    const editToggles = NAMES.map(n => {
-      const on = people.includes(n) ? ' on' : '';
-      const wc = WHO_COLORS[n];
-      const style = on ? `background:${wc.bg};color:${wc.color};border-color:${wc.color}` : `color:${wc.color}`;
-      return `<button type="button" class="who-toggle${on}" style="${style}" onclick="toggleEditWho('${t.id}','${n}')">${n}</button>`;
-    }).join('');
-    html += `<div class="todo-item${t.done?' done':''}" id="item-${t.id}">
-      <button class="check-btn${t.done?' checked':''}" onclick="toggle('${t.id}',${t.done})">
-        <svg viewBox="0 0 10 10"><polyline points="1,5.5 3.8,8.5 9,1.5"/></svg>
-      </button>
-      <div class="todo-body">
-        <div class="todo-text">${esc(t.text)}</div>
-        <div class="todo-meta">${pills}</div>
-        <div class="edit-row" id="edit-${t.id}">
-          <input type="text" id="edit-text-${t.id}" value="${esc(t.text)}" maxlength="120">
-          <div class="who-toggles" id="edit-who-${t.id}">${editToggles}</div>
-          <button class="save-btn" onclick="saveEdit('${t.id}')">Speichern</button>
-          <button class="cancel-btn" onclick="closeEdit('${t.id}')">Abbrechen</button>
-        </div>
+    html += `<div class="day-section" data-day="${day}">
+      <div class="day-header">
+        <span class="day-title">${day}</span>
+        <span class="day-progress">${dayDone} von ${items.length}</span>
       </div>
-      <button class="edit-btn" onclick="openEdit('${t.id}')" title="Bearbeiten">
-        <svg viewBox="0 0 14 14"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/><path d="M8 4l2 2"/></svg>
-      </button>
-      <button class="del-btn" onclick="delTodo('${t.id}')">&times;</button>
-    </div>`;
+      <div class="day-bar"><div class="day-bar-fill" style="width:${dayPct}%"></div></div>`;
+
+    if (!items.length) {
+      html += '<div class="day-empty">Keine Aufgaben</div>';
+    } else {
+      items.forEach(t => {
+        const people = t.who.split(',').map(s => s.trim()).filter(Boolean);
+        const pills = people.map(p => {
+          const wc = WHO_COLORS[p] || { bg:'#eee', color:'#555' };
+          return `<span class="who-pill" style="background:${wc.bg};color:${wc.color}">${p}</span>`;
+        }).join('');
+        const editToggles = NAMES.map(n => {
+          const on = people.includes(n) ? ' on' : '';
+          const wc = WHO_COLORS[n];
+          const style = on ? `background:${wc.bg};color:${wc.color};border-color:${wc.color}` : `color:${wc.color}`;
+          return `<button type="button" class="who-toggle${on}" style="${style}" onclick="toggleEditWho('${t.id}','${n}')">${n}</button>`;
+        }).join('');
+        html += `<div class="todo-item${t.done?' done':''}" id="item-${t.id}" draggable="true" data-id="${t.id}" data-day="${day}">
+          <button class="check-btn${t.done?' checked':''}" onclick="toggle('${t.id}',${t.done})">
+            <svg viewBox="0 0 10 10"><polyline points="1,5.5 3.8,8.5 9,1.5"/></svg>
+          </button>
+          <div class="todo-body">
+            <div class="todo-text">${esc(t.text)}</div>
+            <div class="todo-meta">${pills}</div>
+            <div class="edit-row" id="edit-${t.id}">
+              <input type="text" id="edit-text-${t.id}" value="${esc(t.text)}" maxlength="120">
+              <div class="who-toggles" id="edit-who-${t.id}">${editToggles}</div>
+              <button class="save-btn" onclick="saveEdit('${t.id}')">Speichern</button>
+              <button class="cancel-btn" onclick="closeEdit('${t.id}')">Abbrechen</button>
+            </div>
+          </div>
+          <button class="edit-btn" onclick="openEdit('${t.id}')" title="Bearbeiten">
+            <svg viewBox="0 0 14 14"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/><path d="M8 4l2 2"/></svg>
+          </button>
+          <button class="del-btn" onclick="delTodo('${t.id}')">&times;</button>
+        </div>`;
+      });
+    }
+    html += '</div>';
   });
-  html += '</div>';
+
   list.innerHTML = html;
+  setupDragDrop();
 }
 
 window.toggle = async function(id, wasDone) {
@@ -363,6 +372,168 @@ document.getElementById('who-toggles').innerHTML = NAMES.map(n => {
   const wc = WHO_COLORS[n];
   return `<button type="button" class="who-toggle" style="color:${wc.color}" onclick="toggleAddWho('${n}')">${n}</button>`;
 }).join('');
+
+// --- Drag & Drop: Names onto tasks + Tasks between day sections ---
+function setupDragDrop() {
+  // Name pills → tasks (drag from bar)
+  document.querySelectorAll('.drag-name').forEach(pill => {
+    pill.ondragstart = e => {
+      e.dataTransfer.setData('text/drag-name', pill.dataset.name);
+      e.dataTransfer.effectAllowed = 'copy';
+    };
+  });
+
+  // Task items: draggable + drop targets for names
+  document.querySelectorAll('.todo-item[draggable="true"]').forEach(item => {
+    item.addEventListener('dragstart', e => {
+      if (e.dataTransfer.types.includes('text/drag-name')) return;
+      e.dataTransfer.setData('text/drag-task', item.dataset.id);
+      e.dataTransfer.effectAllowed = 'move';
+      item.classList.add('dragging');
+    });
+    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+
+    // Accept name drops
+    item.addEventListener('dragover', e => {
+      if (e.dataTransfer.types.includes('text/drag-name')) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        item.classList.add('drag-over');
+      }
+    });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', async e => {
+      item.classList.remove('drag-over');
+      const name = e.dataTransfer.getData('text/drag-name');
+      if (name) {
+        e.preventDefault();
+        assignNameToTask(item.dataset.id, name);
+      }
+    });
+  });
+
+  // Day sections: accept task drops to move tasks between days
+  document.querySelectorAll('.day-section').forEach(section => {
+    section.addEventListener('dragover', e => {
+      const hasTask = e.dataTransfer.types.includes('text/drag-task');
+      if (!hasTask) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      // Clear others, highlight this section
+      document.querySelectorAll('.day-section.drag-over-day').forEach(s => s.classList.remove('drag-over-day'));
+      section.classList.add('drag-over-day');
+    });
+    section.addEventListener('dragleave', e => {
+      // Only remove if leaving the section entirely
+      if (!section.contains(e.relatedTarget)) {
+        section.classList.remove('drag-over-day');
+      }
+    });
+    section.addEventListener('drop', async e => {
+      section.classList.remove('drag-over-day');
+      const taskId = e.dataTransfer.getData('text/drag-task');
+      if (!taskId) return;
+      e.preventDefault();
+      const targetDay = section.dataset.day;
+      const todo = todos.find(t => t.id == taskId);
+      if (!todo || todo.day === targetDay) return;
+      await sb.from('reno_todos').update({ day: targetDay }).eq('id', taskId);
+      await loadTodos();
+    });
+  });
+
+  // Touch: drag names onto tasks
+  setupNameTouchDrag();
+  // Touch: drag tasks between day sections
+  setupTaskTouchDrag();
+}
+
+function setupNameTouchDrag() {
+  document.querySelectorAll('.drag-name').forEach(pill => {
+    let clone = null;
+    pill.addEventListener('touchstart', e => {
+      const t = e.touches[0];
+      clone = pill.cloneNode(true);
+      clone.style.cssText = `position:fixed;z-index:999;pointer-events:none;opacity:.85;left:${t.clientX-20}px;top:${t.clientY-20}px;`;
+      document.body.appendChild(clone);
+      pill._dragName = pill.dataset.name;
+    }, { passive: true });
+    pill.addEventListener('touchmove', e => {
+      if (!clone) return;
+      e.preventDefault();
+      const t = e.touches[0];
+      clone.style.left = (t.clientX - 20) + 'px';
+      clone.style.top = (t.clientY - 20) + 'px';
+      document.querySelectorAll('.todo-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+      const target = document.elementFromPoint(t.clientX, t.clientY);
+      const item = target?.closest?.('.todo-item');
+      if (item) item.classList.add('drag-over');
+    }, { passive: false });
+    pill.addEventListener('touchend', e => {
+      if (clone) { clone.remove(); clone = null; }
+      const t = e.changedTouches[0];
+      const target = document.elementFromPoint(t.clientX, t.clientY);
+      const item = target?.closest?.('.todo-item');
+      document.querySelectorAll('.todo-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+      if (item) assignNameToTask(item.dataset.id, pill._dragName);
+    });
+  });
+}
+
+function setupTaskTouchDrag() {
+  document.querySelectorAll('.todo-item[draggable="true"]').forEach(item => {
+    let clone = null, dragging = false, startY = 0;
+    item.addEventListener('touchstart', e => {
+      startY = e.touches[0].clientY;
+      dragging = false;
+    }, { passive: true });
+    item.addEventListener('touchmove', e => {
+      const t = e.touches[0];
+      if (!dragging && Math.abs(t.clientY - startY) > 10) {
+        dragging = true;
+        clone = document.createElement('div');
+        clone.textContent = item.querySelector('.todo-text').textContent.substring(0, 30) + '…';
+        clone.style.cssText = 'position:fixed;z-index:999;pointer-events:none;background:var(--card);border:1px solid var(--accent);border-radius:8px;padding:6px 12px;font-size:12px;opacity:.9;max-width:200px;';
+        document.body.appendChild(clone);
+      }
+      if (!dragging) return;
+      e.preventDefault();
+      clone.style.left = (t.clientX - 30) + 'px';
+      clone.style.top = (t.clientY - 20) + 'px';
+      document.querySelectorAll('.day-section.drag-over-day').forEach(s => s.classList.remove('drag-over-day'));
+      const target = document.elementFromPoint(t.clientX, t.clientY);
+      const section = target?.closest?.('.day-section');
+      if (section) section.classList.add('drag-over-day');
+    }, { passive: false });
+    item.addEventListener('touchend', async e => {
+      if (!dragging) return;
+      if (clone) { clone.remove(); clone = null; }
+      const t = e.changedTouches[0];
+      document.querySelectorAll('.day-section.drag-over-day').forEach(s => s.classList.remove('drag-over-day'));
+      const target = document.elementFromPoint(t.clientX, t.clientY);
+      const section = target?.closest?.('.day-section');
+      if (section) {
+        const targetDay = section.dataset.day;
+        const todo = todos.find(td => td.id == item.dataset.id);
+        if (todo && todo.day !== targetDay) {
+          await sb.from('reno_todos').update({ day: targetDay }).eq('id', item.dataset.id);
+          await loadTodos();
+        }
+      }
+      dragging = false;
+    });
+  });
+}
+
+async function assignNameToTask(id, name) {
+  const todo = todos.find(t => t.id == id);
+  if (!todo) return;
+  const people = todo.who.split(',').map(s => s.trim()).filter(Boolean);
+  if (people.includes(name)) return;
+  people.push(name);
+  await sb.from('reno_todos').update({ who: people.join(',') }).eq('id', id);
+  await loadTodos();
+}
 
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function confetti() {
